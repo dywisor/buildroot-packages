@@ -1,0 +1,58 @@
+From ba43f490dd3f5e8bb40faf7d61012b24aaf6f557 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andr=C3=A9=20Erdmann?= <dywi@mailerd.de>
+Date: Mon, 25 Aug 2014 23:20:49 +0200
+Subject: [PATCH 5/6] tlp-functions, set_disk_*(): accept "keep" value
+
+Adds a special value(1) to the apm/spindown_timeout/iosched lists
+that keeps a disk's apm/spindown/scheduler setting untouched.
+Useful when certain disks should appear in tlp-stat, but left as-is otherwise.
+
+(1) either "_" or "keep" is accepted as "keep-as-is" value
+
+Introduces a global variable in tlp-functions, DISK_NOP_WORDS.
+---
+ tlp-functions | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/tlp-functions b/tlp-functions
+index 7609f28..604955c 100755
+--- a/tlp-functions
++++ b/tlp-functions
+@@ -52,6 +52,7 @@ readonly STATEDIR="/var/lib/tlp"
+ readonly RFSTATEFILE=$STATEDIR/rfkill-saved
+ readonly BAYSTATEFILE=$STATEDIR/bay-saved
+ 
++readonly DISK_NOP_WORDS="_ keep"
+ readonly DEFAULT_DISK_DEVICES="sda"
+ 
+ # ----------------------------------------------------------------------------
+@@ -676,6 +677,8 @@ set_disk_apm_level () { # set disk apm level
+             echo_debug "pm" "${log_message} -- missing"
+         elif ! check_disk_hdparm_cap $disk_dev; then
+             echo_debug "pm" "${log_message} -- not supported"
++        elif wordinlist "$1" "$DISK_NOP_WORDS"; then
++            echo_debug "pm" "${log_message} -- keep as is"
+         else
+             echo_debug "pm" "${log_message}"
+             $HDPARM -B $1 /dev/$disk_dev > /dev/null 2>&1
+@@ -716,6 +719,8 @@ set_disk_spindown_timeout () { # set disk spindown timeout
+             echo_debug "pm" "${log_message} -- missing"
+         elif ! check_disk_hdparm_cap $disk_dev; then
+             echo_debug "pm" "${log_message} -- not supported"
++        elif wordinlist "$1" "$DISK_NOP_WORDS"; then
++            echo_debug "pm" "${log_message} -- keep as is"
+         else
+             echo_debug "pm" "${log_message}"
+             $HDPARM -S $1 /dev/$disk_dev > /dev/null 2>&1
+@@ -752,6 +757,8 @@ set_disk_io_sched () { # set disk io scheduler
+             echo_debug "pm" "${log_message} -- missing"
+         elif [ ! -f $schedctrl ]; then
+             echo_debug "pm" "${log_message} -- not supported"
++        elif wordinlist "$sched" "$DISK_NOP_WORDS"; then
++            echo_debug "pm" "${log_message} -- keep as is"
+         else
+             echo_debug "pm" "${log_message}"
+             echo -n $sched > $schedctrl
+-- 
+2.0.4
+

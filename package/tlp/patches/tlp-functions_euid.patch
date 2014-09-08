@@ -1,0 +1,13 @@
+diff --git a/tlp-functions b/tlp-functions
+index fa216cd..f92f129 100755
+--- a/tlp-functions
++++ b/tlp-functions
+@@ -91,7 +91,7 @@ check_sysfs ()  { # check if sysfile exists -- $1: routine; $2: sysfs path
+ }
+ 
+ test_root () { # test root privilege -- rc: 0=root, 1=not root
+-    [ "$(id -u)" = "0" ]
++    [ "$(id -ru)" = "0" ]
+ }
+ 
+ check_root () { # show error message and exit when root privilege missing

@@ -1,0 +1,53 @@
+patches/:
+* patches/disk/, patches/sens/ are in the process of being merged upstream
+
+* patches/systemd-compat adds systemd-specific checks
+
+* patches/tlp-functions_noperl removes the perl dependency from tlp-functions
+  (replaces a single "perl -pe" command with "sed -e")
+  Note that this patch doesn't modify the regex in the perl(->sed) command;
+  it's still assumed that ~$BAY_DEVICE is exactly 3 chars long ("sr0", not "sr10")
+  --> propose a patch upstream:
+  + poweroff_drivebay(): change regex to 's!/block/[^\/]*$!!'
+  ++ OR simply use the shell's builtin non-greedy variable substitution:
+  ++ > syspath="/sys$($UDEVADM info...)"
+  ++ > syspath="${syspath%/block/*}"
+  + poweroff_drivebay(): fix [ -n "$syspath" ] check; syspath always starts with /sys
+
+* patches/tlp-functions_euid changes test_root() in tlp-functions so that
+  it doesn't fail in container environments ("sudo systemd-nspawn tlp-stat")
+  -- probably not necessary
+
+
+addons/:
+* addons/build-scripts contains/ helper scripts for tlp.mk
+
+* addons/fake_lsb_release is a lsb_release replacement for tlp-stat
+  (reads /etc/os-release and prints $PRETTY_NAME)
+
+* addons/tpacpi-bat.null is a dummy tpacpi-bat shell script that returns
+  "not supported"
+
+* addons/devlist-sh/ is a reimplementation of tlp-{pci,usb}list in shell code,
+  this allows to install tlp+tlp-stat without perl
+  (tpacpi-bat still requires perl)
+
+
+Notes:
+* systemd is a hard dependency. sysV needs pm-utils (not available in BR)
+
+* overall, sources are modified heavily (patches + sed-editing) and the
+  installation doesn't follow upstream's guidelines closely,
+  so consider this variant _UNSUPPORTED_
+  (for example, tlp-{pci,usb}list and tpacpi-bat are replaced with custom
+  scripts, depending on what's configured)
+
+* no tlp.conf.ups present/written (using .nobat instead)
+
+* rfkill packaged separately, unsure if rfkill from busybox is sufficient
+
+* unsure about the sed dependency (maybe busybox sed works, too)
+* ^~ gawk
+
+* addons/devlist-sh should be moved to somewhere else,
+  e.g. gentoo-additions repo

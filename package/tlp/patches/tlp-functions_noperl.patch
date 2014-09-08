@@ -1,0 +1,13 @@
+diff --git a/tlp-functions b/tlp-functions
+index fa216cd..a6054da 100755
+--- a/tlp-functions
++++ b/tlp-functions
+@@ -1952,7 +1952,7 @@ poweroff_drivebay () { # power off optical drive in drive bay
+             sleep 1
+ 
+             # Unregister scsi device
+-            syspath="/sys$($UDEVADM info --query=path --name=$optdrv | perl -pe 's!/block/...$!!')"
++            syspath="/sys$($UDEVADM info --query=path --name=$optdrv | sed -e 's!/block/...$!!')"
+             echo_debug "pm" "poweroff_drivebay: syspath=$syspath"
+             [ -n "$syspath" ] && echo 1 > $syspath/delete
+ 

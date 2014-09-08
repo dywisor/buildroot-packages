@@ -1,0 +1,189 @@
+From b064f4bb7a6f61638ea4f4fef7927d49252ea3b2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andr=C3=A9=20Erdmann?= <dywi@mailerd.de>
+Date: Mon, 25 Aug 2014 22:08:15 +0200
+Subject: [PATCH 3/6] tlp-functions: improve handling of DISK_DEVICES
+
+Setting APM/spindown/iosched might misbehave when dealing with missing
+disks or disks lacking hdparm cap etc.
+
+Example:
+
+  DISK_DEVICES="ataid-ultrabay-disk ataid-system-disk"
+  DISK_APM_LEVEL_ON_$$PWR$$="127 254"
+
+With the existing implementation, TLP would set APM=127 for the system disk
+when the ultrabay disk is not present, because the apmlist iterator gets
+incremented only if the disk device exists (same for spindown/iosched lists).
+
+The solution is to always remove one item from the apm/spindown/iosched list
+when looping over DISK_DEVICES (-> pairwise iteration).
+
+While at it, replace the "%list=$(echo $%list | sed %expr)" commands
+with a more readable variant that doesn't involve subprocess/pipes:
+
+   $@ := %list
+   for dev in $DISK_DEVICES; do
+      # do sth with $dev and $1
+      shift
+   done
+
+However, this requires to back up parameters, e.g. $1 (_pwrmode).
+
+No functionality change introduced by this commit,
+except for pairwise iteration.
+---
+ tlp-functions | 85 +++++++++++++++++++++++++++++++++--------------------------
+ 1 file changed, 47 insertions(+), 38 deletions(-)
+
+diff --git a/tlp-functions b/tlp-functions
+index cbffc1a..16006d0 100755
+--- a/tlp-functions
++++ b/tlp-functions
+@@ -651,34 +651,36 @@ get_disk_dev () { # translate disk id to device (sdX)
+ set_disk_apm_level () { # set disk apm level
+     # $1: 0=ac mode, 1=battery mode
+ 
+-    local dev apm apmlist
++    local dev _pwrmode
++    _pwrmode="$1"
+ 
+     : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
+-    if [ $1 = "1" ]; then
+-        apmlist=$DISK_APM_LEVEL_ON_BAT
++    # set @argv := apmlist (blanks removed - relying on a sane $IFS)
++    if [ ${_pwrmode} = "1" ]; then
++        set -- $DISK_APM_LEVEL_ON_BAT
+     else
+-        apmlist=$DISK_APM_LEVEL_ON_AC
++        set -- $DISK_APM_LEVEL_ON_AC
+     fi
+ 
+-    # strip excess blanks from list
+-    apmlist=$(echo -n $apmlist | sed -r 's/ +/ /g; s/^ | $//g')
+-
+-    [ -z "$apmlist" ] && return 0
++    [ $# -gt 0 ] || return 0
+ 
++    # pairwise iteration DISK_DEVICES [1,n], apmlist [1,m]; m > 0
++    #  for j in [1,n]: disk_dev[j], apmlist[min(j,m)]
++    #
+     for dev in $DISK_DEVICES; do
++        : ${1:?BUG: broken apmlist handling}
+         get_disk_dev $dev
+ 
+         if [ -b /dev/$disk_dev ]; then
+-            check_disk_hdparm_cap $disk_dev
+-            if [ $? = 0 ]; then
+-                # parse list
+-                apm=$(echo -n $apmlist | sed -r 's/^(\w+) .*/\1/')
+-                apmlist=$(echo -n $apmlist | sed -r 's/^\w+ (.*)/\1/')
+-
+-                echo_debug "pm" "set_disk_apm_level($1): $disk_dev [$disk_id] $apm"
+-                $HDPARM -B $apm /dev/$disk_dev > /dev/null 2>&1
++            if check_disk_hdparm_cap $disk_dev; then
++                echo_debug "pm" "set_disk_apm_level(${_pwrmode}): $disk_dev [$disk_id] $1"
++                $HDPARM -B $1 /dev/$disk_dev > /dev/null 2>&1
++
+             fi
+         fi
++
++        # last entry in apmlist applies to all remaining disks
++        [ $# -lt 2 ] || shift
+     done
+ 
+     return 0
+@@ -687,55 +689,59 @@ set_disk_apm_level () { # set disk apm level
+ set_disk_spindown_timeout () { # set disk spindown timeout
+     # $1: 0=ac mode, 1=battery mode
+ 
+-    local dev timeout timeoutlist
++    local dev _pwrmode
++    _pwrmode="$1"
+ 
+     : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
+-    if [ $1 = "1" ]; then
+-        timeoutlist=$DISK_SPINDOWN_TIMEOUT_ON_BAT
++    # set @argv := timeoutlist
++    if [ ${_pwrmode} = "1" ]; then
++        set -- $DISK_SPINDOWN_TIMEOUT_ON_BAT
+     else
+-        timeoutlist=$DISK_SPINDOWN_TIMEOUT_ON_AC
++        set -- $DISK_SPINDOWN_TIMEOUT_ON_AC
+     fi
+ 
+-    # strip excess blanks from list
+-    timeoutlist=$(echo -n $timeoutlist | sed -r 's/ +/ /g; s/^ | $//g')
+-
+-    [ -z "$timeoutlist" ] && return 0
++    [ $# -gt 0 ] || return 0
+ 
++    # pairwise iteration DISK_DEVICES [1,n], timeoutlist [1,m]; m > 0
++    #  for j in [1,n]: disk_dev[j], timeoutlist[min(j,m)]
++    #
+     for dev in $DISK_DEVICES; do
++        : ${1:?BUG: broken spindown timeout list handling}
+         get_disk_dev $dev
+ 
+         if [ -b /dev/$disk_dev ]; then
+-            check_disk_hdparm_cap $disk_dev
+-            if [ $? = 0 ]; then
+-                # parse list
+-                timeout=$(echo -n $timeoutlist | sed -r 's/^(\w+) .*/\1/')
+-                timeoutlist=$(echo -n $timeoutlist | sed -r 's/^\w+ (.*)/\1/')
+-
+-                echo_debug "pm" "set_disk_spindown_timeout($1): $disk_dev [$disk_id] $timeout"
+-                $HDPARM -S $timeout /dev/$disk_dev > /dev/null 2>&1
++            if check_disk_hdparm_cap $disk_dev; then
++                echo_debug "pm" "set_disk_spindown_timeout(${_pwrmode}): $disk_dev [$disk_id] $1"
++                $HDPARM -S $1 /dev/$disk_dev > /dev/null 2>&1
+             fi
+         fi
++
++        # last entry in timeoutlist applies to all remaining disks
++        [ $# -lt 2 ] || shift
+     done
+ 
+     return 0
+ }
+ 
+ set_disk_io_sched () { # set disk io scheduler
+-    local dev sched schedlist schedctrl
++    local dev sched schedctrl
+ 
+-    [ -n "$DISK_IOSCHED" ] || return 0
+     : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
++    # set @argv := schedlist
++    set -- $DISK_IOSCHED
+ 
+-    # strip excess blanks from list
+-    schedlist=$(echo -n $DISK_IOSCHED | sed -r 's/ +/ /g; s/^ | $//g')
++    [ $# -gt 0 ] || return 0
+ 
++    # pairwise iteration DISK_DEVICES [1,n], schedlist [1,m]; m > 0
++    #  for j in [1,min(n,m)]   : disk_dev[j], schedlistj]
++    #  for j in [min(n,m)+1,n] : disk_dev[j], %DEFAULT_DISK_IO_SCHEDULER
++    #
+     for dev in $DISK_DEVICES; do
+         get_disk_dev $dev
+ 
+         if [ -b /dev/$disk_dev ]; then
+             # parse list, add cfq as default when list is too short
+-            sched=$(echo -n $schedlist | sed -r 's/^(\w+) .*/\1/')
+-            schedlist=$(echo -n "$schedlist cfq"| sed -r 's/^\w+ (.*)/\1/')
++            sched=${1:-cfq}
+             schedctrl="/sys/block/$disk_dev/queue/scheduler"
+ 
+             if [ -f $schedctrl ]; then
+@@ -743,6 +749,9 @@ set_disk_io_sched () { # set disk io scheduler
+                 echo -n $sched > $schedctrl
+             fi
+         fi
++
++        # using %DEFAULT_DISK_IO_SCHEDULER when argv is empty
++        [ $# -eq 0 ] || shift
+     done
+ 
+     return 0
+-- 
+2.0.4
+

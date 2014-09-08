@@ -1,0 +1,71 @@
+From 30fcbda7acc03d70efd7993ce3c80800e77e0caa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andr=C3=A9=20Erdmann?= <dywi@mailerd.de>
+Date: Mon, 25 Aug 2014 21:54:57 +0200
+Subject: [PATCH 2/6] tlp-{functions,stat}: refactor DISK_DEVICES
+
+set DEFAULT_DISK_DEVICES="sda" in tlp-functions and use that
+for setting DISK_DEVICES to its default value in tlp-functions/tlp-stat.
+
+Additionally, eliminate double assignments (VAR=${VAR:=value}).
+---
+ tlp-functions | 8 +++++---
+ tlp-stat      | 2 +-
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/tlp-functions b/tlp-functions
+index b3e5130..cbffc1a 100755
+--- a/tlp-functions
++++ b/tlp-functions
+@@ -52,6 +52,8 @@ readonly STATEDIR="/var/lib/tlp"
+ readonly RFSTATEFILE=$STATEDIR/rfkill-saved
+ readonly BAYSTATEFILE=$STATEDIR/bay-saved
+ 
++readonly DEFAULT_DISK_DEVICES="sda"
++
+ # ----------------------------------------------------------------------------
+ # Functions
+ 
+@@ -651,7 +653,7 @@ set_disk_apm_level () { # set disk apm level
+ 
+     local dev apm apmlist
+ 
+-    DISK_DEVICES=${DISK_DEVICES:=sda}
++    : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
+     if [ $1 = "1" ]; then
+         apmlist=$DISK_APM_LEVEL_ON_BAT
+     else
+@@ -687,7 +689,7 @@ set_disk_spindown_timeout () { # set disk spindown timeout
+ 
+     local dev timeout timeoutlist
+ 
+-    DISK_DEVICES=${DISK_DEVICES:=sda}
++    : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
+     if [ $1 = "1" ]; then
+         timeoutlist=$DISK_SPINDOWN_TIMEOUT_ON_BAT
+     else
+@@ -722,8 +724,8 @@ set_disk_io_sched () { # set disk io scheduler
+     local dev sched schedlist schedctrl
+ 
+     [ -n "$DISK_IOSCHED" ] || return 0
++    : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
+ 
+-    DISK_DEVICES=${DISK_DEVICES:=sda}
+     # strip excess blanks from list
+     schedlist=$(echo -n $DISK_IOSCHED | sed -r 's/ +/ /g; s/^ | $//g')
+ 
+diff --git a/tlp-stat b/tlp-stat
+index 939aabe..e1082a8 100755
+--- a/tlp-stat
++++ b/tlp-stat
+@@ -397,7 +397,7 @@ if [ "$show_all" = "1" ]; then
+ 
+     # --- show disk info form hdparm
+     echo "+++ Storage Devices"
+-    DISK_DEVICES=${DISK_DEVICES:=sda}
++    : ${DISK_DEVICES:=${DEFAULT_DISK_DEVICES}}
+     for dev in $DISK_DEVICES; do # iterate all devices
+         get_disk_dev $dev
+ 
+-- 
+2.0.4
+
