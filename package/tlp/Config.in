@@ -263,8 +263,7 @@ menu "Features"
 
    choice
       prompt "usblist/pcilist implementation"
-      default BR2_PACKAGE_TLP_DEVLIST_IMPL_SHELL if !BR2_PACKAGE_PERL
-      default BR2_PACKAGE_TLP_DEVLIST_IMPL_PERL  if BR2_PACKAGE_PERL
+      default BR2_PACKAGE_TLP_DEVLIST_IMPL_SHELL
 
       depends on BR2_PACKAGE_TLP_NEED_DEVLIST
 
