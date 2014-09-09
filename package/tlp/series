@@ -1,3 +1,2 @@
 patches/systemd-compat.patch
-patches/tlp-functions_euid.patch
 patches/tlp-functions_noperl.patch

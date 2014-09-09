@@ -12,10 +12,6 @@ patches/:
   ++ > syspath="${syspath%/block/*}"
   + poweroff_drivebay(): fix [ -n "$syspath" ] check; syspath always starts with /sys
 
-* patches/tlp-functions_euid changes test_root() in tlp-functions so that
-  it doesn't fail in container environments ("sudo systemd-nspawn tlp-stat")
-  -- probably not necessary
-
 
 addons/:
 * addons/build-scripts contains/ helper scripts for tlp.mk
