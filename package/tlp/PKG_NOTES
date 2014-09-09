@@ -12,6 +12,10 @@ patches/:
   ++ > syspath="${syspath%/block/*}"
   + poweroff_drivebay(): fix [ -n "$syspath" ] check; syspath always starts with /sys
 
+  2014-09-09: patch replaced by patches/tlp-functions-poweroff_drivebay-fix-syspath.patch
+
+* patches/tlp-functions-poweroff_drivebay-fix-syspath.patch, see above
+
 
 addons/:
 * addons/build-scripts contains/ helper scripts for tlp.mk

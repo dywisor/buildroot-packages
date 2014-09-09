@@ -1,2 +1,2 @@
 patches/systemd-compat.patch
-patches/tlp-functions_noperl.patch
+patches/tlp-functions-poweroff_drivebay-fix-syspath.patch
