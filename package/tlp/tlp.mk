@@ -4,8 +4,9 @@
 #
 ################################################################################
 
-TLP_VERSION        = 0.5
-TLP_SITE           = $(call github,linrunner,TLP,$(TLP_VERSION))
+TLP_VERSION        = 0.5.0.900
+TLP_LIVEVER_REF    = 92e8a08ba2924024bbd4f9fdb0d335625ff11ba9
+TLP_SITE           = $(call github,linrunner,TLP,$(TLP_LIVEVER_REF))
 TLP_LICENSE        = GPLv2+ GPLv3
 TLP_LICENSE_FILES  = COPYING LICENSE
 

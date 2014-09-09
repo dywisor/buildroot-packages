@@ -1,10 +1,3 @@
 patches/systemd-compat.patch
 patches/tlp-functions_euid.patch
 patches/tlp-functions_noperl.patch
-patches/disk/0001-tlp-functions-get_disk_dev-minor-fix.patch
-patches/disk/0002-tlp-functions-stat-refactor-DISK_DEVICES.patch
-patches/disk/0003-tlp-functions-improve-handling-of-DISK_DEVICES.patch
-patches/disk/0004-tlp-functions-set_disk_-more-verbose-logging.patch
-patches/disk/0005-tlp-functions-set_disk_-accept-keep-value.patch
-patches/disk/0006-tlp-functions-add-DEFAULT_DISK_IO_SCHEDULER.patch
-patches/sens/0001-multiplex-sysfs-hwmon-lookup.patch

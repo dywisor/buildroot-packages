@@ -1,6 +1,4 @@
 patches/:
-* patches/disk/, patches/sens/ are in the process of being merged upstream
-
 * patches/systemd-compat adds systemd-specific checks
 
 * patches/tlp-functions_noperl removes the perl dependency from tlp-functions
