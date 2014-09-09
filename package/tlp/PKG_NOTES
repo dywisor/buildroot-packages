@@ -51,3 +51,5 @@ Notes:
 
 * addons/devlist-sh should be moved to somewhere else,
   e.g. gentoo-additions repo
+
+* Config.in: check select/depends on
