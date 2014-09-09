@@ -1,4 +1,13 @@
-config BR2_PACKAGE_TLP
+comment "TLP needs udev /dev management"
+   depends on !BR2_PACKAGE_HAS_UDEV
+
+comment "TLP needs systemd or pm-utils"
+   depends on ! ( BR2_PACKAGE_SYSTEMD )
+
+comment "TLP needs a shell"
+   depends on ! ( BR2_PACKAGE_BUSYBOX || BR2_PACKAGE_DASH || BR2_PACKAGE_BASH )
+
+menuconfig BR2_PACKAGE_TLP
    bool   "TLP"
    default n
 
@@ -89,16 +98,6 @@ config BR2_PACKAGE_TLP
 
 
       http://linrunner.de/tlp
-
-
-comment "TLP needs udev /dev management"
-   depends on !BR2_PACKAGE_HAS_UDEV
-
-comment "TLP needs systemd or pm-utils"
-   depends on ! ( BR2_PACKAGE_SYSTEMD )
-
-comment "TLP needs a shell"
-   depends on ! ( BR2_PACKAGE_BUSYBOX || BR2_PACKAGE_DASH || BR2_PACKAGE_BASH )
 
 
 if BR2_PACKAGE_TLP
@@ -391,4 +390,4 @@ menu "Configuration File"
 
 endmenu
 
-endif
+endif # BR2_PACKAGE_TLP
