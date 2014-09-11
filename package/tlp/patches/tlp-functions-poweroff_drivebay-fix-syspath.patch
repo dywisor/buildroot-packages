@@ -1,4 +1,4 @@
-From 767809f3a8cc882931372595619508f8db6f4ac8 Mon Sep 17 00:00:00 2001
+From 475b6814abdc9ea95e201c224371c3ee4f14ebc0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Erdmann?= <dywi@mailerd.de>
 Date: Tue, 9 Sep 2014 22:45:31 +0200
 Subject: [PATCH] tlp-functions, poweroff_drivebay(): fix $syspath
@@ -20,8 +20,6 @@ This leads to two issues:
     is exactly 3 chars long, else the path returned from udevadm is left
     unchanged -- e.g. if BAY_DEVICE is set to "sr10".
     Again, unlikely case.
-    (Maybe one could set BAY_DEVICE to cdromX or sth like disk-by-id/X,
-    then it wouldn't be that unlikely. Didn't check that, though.)
 
 The 'obvious' solution for issue (a) is:
 

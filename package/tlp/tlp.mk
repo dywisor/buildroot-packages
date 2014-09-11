@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-TLP_VERSION        = 0.5.0.900
-TLP_LIVEVER_REF    = 92e8a08ba2924024bbd4f9fdb0d335625ff11ba9
+TLP_VERSION        = 0.5.90X
+TLP_LIVEVER_REF    = 11a40314abb96ddaab19ff484474872bd079341b
 TLP_SITE           = $(call github,linrunner,TLP,$(TLP_LIVEVER_REF))
 TLP_LICENSE        = GPLv2+ GPLv3
 TLP_LICENSE_FILES  = COPYING LICENSE
@@ -63,12 +63,12 @@ endif
 
 # disable installation of tlp-pcilist [optional]
 ifneq ($(BR2_PACKAGE_TLP_PCILIST),y)
-TLP__MAKEFILE_SED += -e '/install\s.*\s+tlp-pcilist/d'
+TLP__MAKEFILE_SED += -e '/install(\s.*)?\s+tlp-pcilist/d'
 endif
 
 # disable installation of tlp-usblist [optional]
 ifneq ($(BR2_PACKAGE_TLP_USBLIST),y)
-TLP__MAKEFILE_SED += -e '/install\s.*\s+tlp-usblist/d'
+TLP__MAKEFILE_SED += -e '/install(\s.*)?\s+tlp-usblist/d'
 endif
 
 
