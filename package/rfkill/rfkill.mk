@@ -10,6 +10,10 @@ RFKILL_SITE          = https://www.kernel.org/pub/software/network/rfkill
 RFKILL_LICENSE       = ISC
 RFKILL_LICENSE_FILES = COPYING
 
+ifeq ($(BR2_PACKAGE_BUSYBOX),y)
+RFKILL_DEPENDENCIES += busybox
+endif
+
 # version.sh fails with exit code 2 (<< git version suffix error)
 # when not specifying a VERSION_SUFFIX
 define RFKILL_BUILD_CMDS
