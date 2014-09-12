@@ -17,7 +17,7 @@ endif
 # version.sh fails with exit code 2 (<< git version suffix error)
 # when not specifying a VERSION_SUFFIX
 define RFKILL_BUILD_CMDS
-	$(MAKE) -C $(@D) CC="$(TARGET_CC)" CFLAGS="$(TARGET_CFLAGS)" \
+	$(TARGET_MAKE_ENV) $(MAKE) -C '$(@D)' $(TARGET_CONFIGURE_OPTS) \
 		V=1 VERSION_SUFFIX="-br"
 endef
 
@@ -25,8 +25,5 @@ define RFKILL_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 -- $(@D)/rfkill $(TARGET_DIR)/usr/sbin/rfkill
 endef
 
-define RFKILL_CLEAN_CMDS
-	rm -f -- $(TARGET_DIR)/usr/sbin/rfkill
-endef
 
 $(eval $(generic-package))
