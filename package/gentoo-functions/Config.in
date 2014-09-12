@@ -1,0 +1,7 @@
+config BR2_PACKAGE_GENTOO_FUNCTIONS
+	bool "gentoo-functions"
+
+	help
+		base functions for Gentoo systems
+
+		https://github.com/gentoo/gentoo-functions

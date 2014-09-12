@@ -6,4 +6,6 @@ if BR2_PACKAGE_BUSYBOX_SHOW_OTHERS
 	source package/rfkill/Config.in
 endif
 
+	source package/gentoo-functions/Config.in
+
 endmenu
