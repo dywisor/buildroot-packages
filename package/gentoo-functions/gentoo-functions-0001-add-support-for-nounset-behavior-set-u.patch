@@ -1,4 +1,4 @@
-From 9a964a3e05204fafe48445742fb1309bfe736689 Mon Sep 17 00:00:00 2001
+From c2d1def12d79eab0bb629b73996b67ea62239538 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Erdmann?= <dywi@mailerd.de>
 Date: Thu, 11 Sep 2014 21:59:37 +0200
 Subject: [PATCH] add support for nounset behavior (set -u)
@@ -40,7 +40,7 @@ Other changes:
  1 file changed, 44 insertions(+), 39 deletions(-)
 
 diff --git a/functions.sh b/functions.sh
-index 86c0e93..e812e2c 100644
+index 73c9b11..65a0396 100644
 --- a/functions.sh
 +++ b/functions.sh
 @@ -25,8 +25,9 @@ _esetdent()
@@ -316,7 +316,7 @@ index 86c0e93..e812e2c 100644
  # around
 -if [ -z "${CONSOLETYPE}" ] ; then
 +if [ -z "${CONSOLETYPE-}" ] ; then
- 	CONSOLETYPE="$(consoletype 2>/dev/null )"; export CONSOLETYPE
+ 	CONSOLETYPE="$(consoletype stdout 2>/dev/null )"; export CONSOLETYPE
  fi
  if [ "${CONSOLETYPE}" = "serial" ] ; then
 @@ -452,7 +457,7 @@ fi
