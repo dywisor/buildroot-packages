@@ -133,7 +133,6 @@ RUNTIME_PM_ON_BAT=${RUNTIME_PM_ON_AC?}
 
 # Runtime PM for *all* pci(e) bus devices, except blacklisted ones:
 # 0=disable / 1=enable
-# Warning: experimental option, could cause system instabilities
 RUNTIME_PM_ALL=1
 
 # Exclude pci(e) device adresses the following list from Runtime PM
@@ -190,10 +189,6 @@ RESTORE_DEVICE_STATE_ON_STARTUP=0
 # Ultrabay or slice battery (values in %)
 #START_CHARGE_THRESH_BAT1=75
 #STOP_CHARGE_THRESH_BAT1=80
-
-# Set to 1 to disable use of tpacpi-bat on Sandy Bridge or newer Thinkpads
-# and force usage of tp-smapi instead
-#DISABLE_TPACPIBAT=1
 
 # ------------------------------------------------------------------------------
 # tlp-rdw - Parameters for the radio device wizard

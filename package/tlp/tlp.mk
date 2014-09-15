@@ -4,45 +4,71 @@
 #
 ################################################################################
 
-TLP_VERSION        = 0.5.90X
-TLP_LIVEVER_REF    = 11a40314abb96ddaab19ff484474872bd079341b
-TLP_SITE           = $(call github,linrunner,TLP,$(TLP_LIVEVER_REF))
-TLP_LICENSE        = GPLv2+ GPLv3
-TLP_LICENSE_FILES  = COPYING LICENSE
+TLP_VERSION         = 0.5.90X
+TLP_LIVEVER_REF     = 542d951efa6010d6fee69f753a6595050f7a591d
+TLP_SOURCE          = tlp-$(TLP_LIVEVER_REF).tar.gz
+TLP_SITE            = $(call github,linrunner,TLP,$(TLP_LIVEVER_REF))
+TLP_LICENSE         = GPLv2+ GPLv3
+TLP_LICENSE_FILES   = COPYING LICENSE
 
-TLP__LIBDIR        = /usr/lib/tlp-pm
-TLP__ULIB          = /lib/udev
-TLP__SYSTEMDLIB    = /lib/systemd
-TLP__CONFFILE      = $(call qstrip,$(BR2_PACKAGE_TLP_CONFFILE_PATH))
+TLP_ADD_LIVEVER_REF = 27f2175dac1ce8550e6e1e5edda28ca5b0c1f0e3
+TLP_ADD_SITE        = \
+	$(call github,dywisor,tlp-gentoo-additions,$(TLP_ADD_LIVEVER_REF))
+TLP_ADD_SOURCE      = tlp-gentoo-additions-$(TLP_ADD_LIVEVER_REF).tar.gz
 
-TLP__X_EMPTY     =
-TLP__X_SPACE     = $(TLP__X_EMPTY) $(TLP__X_EMPTY)
-TLP__X_WS_STRIP  = $(subst $(space),,$(1))
-TLP__X_WS_QSTRIP = $(call qstrip,$(subst $(space),,$(1)))
+TLP__LIBDIR         = /usr/lib/tlp-pm
+TLP__ULIB           = /lib/udev
+TLP__SYSTEMDLIB     = /lib/systemd
+TLP__CONFFILE       = $(or \
+	$(call qstrip,$(BR2_PACKAGE_TLP_CONFFILE_PATH)),\
+	/etc/default/tlp)
 
+TLP__X_EMPTY        =
+TLP__X_SPACE        = $(TLP__X_EMPTY) $(TLP__X_EMPTY)
+TLP__X_WS_STRIP     = $(subst $(space),,$(1))
+TLP__X_WS_QSTRIP    = $(call qstrip,$(subst $(space),,$(1)))
 
-
-TLP_RUN_EDITVAR    = \
-	X_LS_FILES='$(@D)/addons/build-scripts/list_src_files.sh' \
-	'$(@D)/addons/build-scripts/edit_var.sh' '$(@D)'
 
 TLP_DOEXE = $(INSTALL) -D -m 0755 --
 TLP_DOINS = $(INSTALL) -D -m 0644 --
 TLP_DOSYM = ln -fs --
 
 
+define TLP_DO_FETCH_ADDITIONS
+	$(call DOWNLOAD,$(TLP_ADD_SITE:/=)/$(TLP_ADD_SOURCE))
+endef
+TLP_POST_DOWNLOAD_HOOKS += TLP_DO_FETCH_ADDITIONS
+
+define TLP_DO_EXTRACT_ADDITIONS
+	mkdir -p -- $(@D)/additions
+	$(call suitable-extractor,$(TLP_ADD_SOURCE)) $(DL_DIR)/$(TLP_ADD_SOURCE) | \
+	$(TAR) $(TAR_STRIP_COMPONENTS)=1 -C $(@D)/additions $(TAR_OPTIONS) -
+endef
+TLP_POST_EXTRACT_HOOKS += TLP_DO_EXTRACT_ADDITIONS
+
+
+
+TLP__LOCALVER = -br-dirty
 BR2_PACKAGE_TLP_SYSTYPE_DESC ?= undef
-TLP__LOCALVER = -br-dirty+$(BR2_PACKAGE_TLP_SYSTYPE_DESC)
+#TLP__LOCALVER += +$(BR2_PACKAGE_TLP_SYSTYPE_DESC)
 
 ifeq ($(BR2_PACKAGE_TLP_DEVLIST_IMPL_SHELL),y)
 TLP__LOCALVER += +noperl
 endif
 
+define TLP__RUN_MAKE
+	$(TARGET_MAKE_ENV) $(MAKE) -C '$(call qstrip,$(1))' \
+		$(TLP__MAKEOPTS) TLP_SRC=$(@D) $(2)
+endef
+
+define TLP__RUN_MAKE_INSTALL
+	$(call TLP__RUN_MAKE,$(1),DESTDIR=$(TARGET_DIR:/=)/ $(2))
+endef
+
 # make install options
 TLP__MAKEOPTS  =
 TLP__MAKEOPTS += TLP_TLIB=$(TLP__LIBDIR) TLP_ULIB=$(TLP__ULIB)
 TLP__MAKEOPTS += TLP_CONF=$(TLP__CONFFILE)
-
 # init script is installed separately
 TLP__MAKEOPTS += TLP_NO_INIT=1
 # bashcomp not needed
@@ -50,43 +76,71 @@ TLP__MAKEOPTS += TLP_NO_BASHCOMP=1
 # pm-utils not available anyway, no need to install related files
 TLP__MAKEOPTS += TLP_NO_PMUTILS=1
 
-# sed options for removing/editing lines in the Makefile
-TLP__MAKEFILE_SED =
+# commands that will be passed to editsrc
+TLP__EDITSRC =
+
+# FIXME: either enable the .service files or uncomment the line below
+#TLP__EDITSRC += CFGVAR TLP_ENABLE 0
+
+# + hook that executes editsrc (POST_PATCH)
+#   (also applies the base patches)
+define TLP_DO_RUN_EDITSRC
+	$(call TLP__RUN_MAKE,$(@D)/additions,livepatch-basepatch)
+
+	$(TARGET_MAKE_ENV) bash "$(@D)/additions/bin/tlp-editsrc.bash" \
+		-d "$(@D)" $(TLP__EDITSRC)
+endef
+TLP_POST_PATCH_HOOKS += TLP_DO_RUN_EDITSRC
+
+# set custom version str
+TLP__EDITSRC += MACRO appendver \
+	"$(call TLP__X_WS_QSTRIP,$(TLP__LOCALVER))"
+
+# set LSBREL path to TLP__LIBDIR/fake_lsb_release
+#  (lsb_release not available in target)
+TLP__EDITSRC += EDITVAR LSBREL '$(TLP__LIBDIR)/fake_lsb_release'
+
+# relocate libdir files (if != default)
+ifneq ($(TLP__LIBDIR),/usr/lib/tlp-pm)
+TLP__EDITSRC += MACRO libdir "$(TLP__LIBDIR)"
+endif
 
 # always (unconditionally) remove thinkpad-radiosw
-TLP__MAKEFILE_SED += -e '/thinkpad-radiosw/d'
+TLP__EDITSRC += MACRO no-radiosw
 
 # disable installation of wireless scripts [optional]
 ifneq ($(BR2_PACKAGE_TLP_FEATURE_WIRELESS),y)
-TLP__MAKEFILE_SED += -e '/\(_BIN\)\/(bluetooth|wifi|wwan)/d'
+TLP__EDITSRC += MACRO no-wireless
 endif
 
 # disable installation of tlp-pcilist [optional]
-ifneq ($(BR2_PACKAGE_TLP_PCILIST),y)
-TLP__MAKEFILE_SED += -e '/install(\s.*)?\s+tlp-pcilist/d'
+# OR install pcilist to sbin (lspci is a dep and in sbin)
+ifeq ($(BR2_PACKAGE_TLP_PCILIST),y)
+TLP__EDITSRC += MACRO pcilist-sbin
+else
+TLP__EDITSRC += MACRO no-pcilist
 endif
 
 # disable installation of tlp-usblist [optional]
 ifneq ($(BR2_PACKAGE_TLP_USBLIST),y)
-TLP__MAKEFILE_SED += -e '/install(\s.*)?\s+tlp-usblist/d'
+TLP__EDITSRC += MACRO no-usblist
 endif
 
-
-# POST_PATCH: apply TLP__MAKEFILE_SED
-ifneq ($(TLP__MAKEFILE_SED),)
-define TLP_DO_EDIT_MAKEFILE
-	sed -r -i $(@D)/Makefile $(TLP__MAKEFILE_SED)
-endef
-TLP_POST_PATCH_HOOKS += TLP_DO_EDIT_MAKEFILE
+# set TLP_LOAD_MODULES in conffile
+ifeq ($(BR2_PACKAGE_TLP_LOAD_MODULES),y)
+TLP__EDITSRC += MACRO TLP_LOAD_MODULES=y
+else
+TLP__EDITSRC += MACRO TLP_LOAD_MODULES=n
 endif
 
+# add TLP_DEBUG to conffile
+TLP__EDITSRC += MACRO TLP_DEBUG _
 
-# POST_PATCH: addons dir
-define TLP_DO_IMPORT_ADDONS
-	cp -a    -- $(PKGDIR)/addons/ $(@D)/addons/
-	chmod +x -- $(@D)/addons/build-scripts/?*.sh
-endef
-TLP_POST_EXTRACT_HOOKS += TLP_DO_IMPORT_ADDONS
+# relocate CONFFILE [optional]
+ifneq ($(call qstrip,$(TLP__CONFFILE)),/etc/default/tlp)
+TLP__EDITSRC += MACRO conffile "$(TLP__CONFFILE)"
+endif
+
 
 
 # POST_PATCH: replace-conffile [optional]
@@ -98,43 +152,6 @@ define TLP_DO_REPLACE_CONFFILE
 endef
 TLP_POST_PATCH_HOOKS += TLP_DO_REPLACE_CONFFILE
 endif
-
-
-# POST_PATCH: set TLP_LOAD_MODULES in conffile [optional]
-ifneq ($(BR2_PACKAGE_TLP_LOAD_MODULES),y)
-define TLP_DO_DISABLE_MODLOAD
-	printf "\n# %s\nTLP_LOAD_MODULES=n\n\n" \
-		"disable automatic kernel module loading on startup" \
-		>> $(@D)/default
-endef
-TLP_POST_PATCH_HOOKS += TLP_DO_DISABLE_MODLOAD
-endif
-
-
-# POST_PATCH: set CONFFILE path [optional]
-ifneq ($(TLP__CONFFILE),)
-ifneq ($(TLP__CONFFILE),/etc/default/tlp)
-define TLP_DO_SET_CONFFILE_PATH
-	$(TLP_RUN_EDITVAR) CONFFILE '$(TLP__CONFFILE)' '/etc/default/tlp'
-endef
-TLP_POST_PATCH_HOOKS += TLP_DO_SET_CONFFILE_PATH
-endif
-endif
-
-# POST_PATCH: set custom version str
-define TLP_DO_SET_VER
-	$(TLP_RUN_EDITVAR) TLPVER \
-		$(call TLP__X_WS_QSTRIP,$(TLP_VERSION)$(TLP__LOCALVER))
-endef
-TLP_POST_PATCH_HOOKS += TLP_DO_SET_VER
-
-# POST_PATCH: set LSBREL path to TLP__LIBDIR/fake_lsb_release
-#  (lsb_release not available in target)
-## $(TLP_RUN_EDITVAR) LSBREL '\$${libdir}/fake_lsb_release'
-define TLP_DO_SET_LSBREL
-	$(TLP_RUN_EDITVAR) LSBREL '$(TLP__LIBDIR)/fake_lsb_release'
-endef
-TLP_POST_PATCH_HOOKS += TLP_DO_SET_LSBREL
 
 
 # POST_BUILD:
@@ -160,7 +177,7 @@ else
 define TLP_DO_REPLACE_TPACPIBAT
 #  replace tpacpi-bat with dummy script
 	rm -- $(@D)/tpacpi-bat
-	cp -- $(addprefix $(@D)/,addons/tpacpi-bat.null tpacpi-bat)
+	cp -- $(@D)/additions/files/buildroot/tpacpi-bat.null $(@D)/tpacpi-bat
 endef
 TLP_POST_BUILD_HOOKS += TLP_DO_REPLACE_TPACPIBAT
 endif
@@ -170,15 +187,15 @@ endif
 ifeq ($(BR2_PACKAGE_TLP_DEVLIST_IMPL_SHELL),y)
 define TLP_DO_BUILD_DEVLIST_SH
 #  create tlp-devlist-functions scripts
-	$(MAKE) -C '$(@D)/addons/devlist-sh' $(TLP__MAKEOPTS)
+	$(call TLP__RUN_MAKE,$(@D)/additions/devlist-sh,)
 
 #  replace tlp-pcilist [sh]
 	rm -- $(@D)/tlp-pcilist
-	cp -- $(addprefix $(@D)/,addons/devlist-sh/tlp-pcilist.sh tlp-pcilist)
+	cp -- $(@D)/additions/devlist-sh/tlp-pcilist.sh $(@D)/tlp-pcilist
 
 #  replace tlp-usblist [sh]
 	rm -- $(@D)/tlp-usblist
-	cp -- $(addprefix $(@D)/,addons/devlist-sh/tlp-usblist.sh tlp-usblist)
+	cp -- $(@D)/additions/devlist-sh/tlp-usblist.sh $(@D)/tlp-usblist
 endef
 TLP_POST_BUILD_HOOKS += TLP_DO_BUILD_DEVLIST_SH
 endif
@@ -193,11 +210,11 @@ define TLP_INSTALL_TARGET_CMDS
 	rm -f -- $(TARGET_DIR)/$(TLP__CONFFILE)
 
 #  install tlp
-	$(MAKE) -C '$(@D)' $(TLP__MAKEOPTS) DESTDIR=$(TARGET_DIR)/ install-tlp
+	$(call TLP__RUN_MAKE_INSTALL,$(@D),install-tlp)
 
 #  lsb_release dummy script
 	$(TLP_DOEXE) \
-		$(@D)/addons/fake_lsb_release \
+		$(@D)/additions/files/buildroot/fake_lsb_release \
 		$(TARGET_DIR)$(TLP__LIBDIR)/fake_lsb_release
 endef
 
@@ -205,9 +222,7 @@ endef
 ifeq ($(BR2_PACKAGE_TLP_NEED_DEVLIST)$(BR2_PACKAGE_TLP_DEVLIST_IMPL_SHELL),yy)
 define TLP_DO_INSTALL_DEVLIST_FUNCTIONS
 #  tlp-devlist-functions [libdir]
-	$(TLP_DOINS) \
-		$(@D)/addons/devlist-sh/tlp-devlist-functions \
-		$(TARGET_DIR)/$(TLP__LIBDIR)/tlp-devlist-functions
+	$(call TLP__RUN_MAKE_INSTALL,$(@D)/additions/devlist-sh,install-functions)
 endef
 TLP_POST_INSTALL_TARGET_HOOKS += TLP_DO_INSTALL_DEVLIST_FUNCTIONS
 endif
@@ -215,12 +230,12 @@ endif
 # POST_INSTALL_TARGET: install tlp-rdw [optional]
 ifeq ($(BR2_PACKAGE_TLP_RDW),y)
 define TLP_DO_INSTALL_RDW
-	$(MAKE) -C '$(@D)' $(TLP__MAKEOPTS) DESTDIR=$(TARGET_DIR)/ install-rdw
+	$(call TLP__RUN_MAKE_INSTALL,$(@D),install-rdw)
 endef
 TLP_POST_INSTALL_TARGET_HOOKS += TLP_DO_INSTALL_RDW
 endif
 
-# pre-POST_INSTALL_TARGET: systemd files
+# (pre-)POST_INSTALL_TARGET: systemd files
 define TLP_INSTALL_INIT_SYSTEMD
 #  tlp.service [systemd]
 	$(TLP_DOINS) \
@@ -234,13 +249,11 @@ define TLP_INSTALL_INIT_SYSTEMD
 endef
 
 # pre-POST_INSTALL_TARGET: sysv files
-#  (pm-utils files should be installed by $(@D)/Makefile)
 #  -- unreachable (only systemd supported so far)
 define TLP_INSTALL_INIT_SYSV
 #  tlp.init [sysV]
    $(TLP_DOEXE) $(@D)/tlp.init $(TARGET_DIR)/etc/init.d/S80tlp
 endef
-
 
 
 $(eval $(generic-package))
