@@ -8,4 +8,6 @@ endif
 
 	source package/gentoo-functions/Config.in
 
+	source package/systemd-hacks/Config.in
+
 endmenu

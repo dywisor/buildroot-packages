@@ -1,0 +1,11 @@
+[Unit]
+Description=Mongoose HTTP Daemon
+
+[Service]
+ExecStart=/usr/sbin/mongoose /etc/mongoose.conf
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

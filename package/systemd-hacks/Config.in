@@ -1,0 +1,474 @@
+menuconfig BR2_PACKAGE_SYSTEMD_HACKS
+	bool "systemd hacks"
+
+	depends on BR2_PACKAGE_SYSTEMD
+
+	help
+		Various fixes/changes for systemd-based systems.
+
+
+if BR2_PACKAGE_SYSTEMD_HACKS
+
+config BR2_PACKAGE_SYSTEMD_HACKS_FIXUP_SYMLINKED_DIRS
+	bool "replace symlinks to /tmp with directories (fix)"
+
+	default y
+
+	help
+		Some systemd services, e.g. hostnamed, fail if ""a"" directory
+		in /var/ is a symlink (TODO/FIXME: which directory, exactly?).
+
+		If you say y here, the following filesystem paths will be created,
+		if they existed as symlink before:
+
+		  o /run             as directory
+		  o /var/run         as symlink to ../run   (-> /run)
+		  o /var/lock        as symlink to run/lock (-> /run/lock, nonexistent)
+		  o /var/pcmcia      as symlink to lib/pcmcia
+		  o /var/spool       as directory
+		  o /var/log         as directory
+		  o /var/tmp         as directory
+		  o /var/cache       as directory
+		  o /var/lib/dbus    as directory
+		  o /var/lib/pcmcia  as directory
+		  o /var/lib/misc    as directory
+
+config BR2_PACKAGE_SYSTEMD_HACKS_FIXUP_LIBDIR_ALL
+	bool "move all .service files to systemd's libdir"
+
+	select BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP
+
+	help
+		If set y, all .service files in /etc/systemd/system are moved to
+		systemd's libdir.
+
+config BR2_PACKAGE_SYSTEMD_HACKS_FIXUP_LIBDIR_ALL_DEPS
+	string "additional deps"
+
+	default ""
+
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_FIXUP_LIBDIR_ALL
+
+	help
+		Allows to add dependencies so that .service files can be moved properly.
+
+
+menu "install service files"
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_FIXUP_AVAHI_DAEMON
+	bool "avahi-daemon (fixup)"
+
+	depends on BR2_PACKAGE_AVAHI_DAEMON
+
+	help
+		Replaces avahi-daemon.service and moves the files to systemd's libdir.
+
+comment "avahi-daemon not selected"
+	depends on !BR2_PACKAGE_AVAHI_DAEMON
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_MONGOOSE
+	bool "mongoose"
+
+	depends on BR2_PACKAGE_MONGOOSE
+
+	help
+		Installs a service file for the mongoose web server.
+
+		Also installs a default config file to /etc/mongoose.conf.
+
+comment "mongoose not selected"
+	depends on !BR2_PACKAGE_MONGOOSE
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RCLOCAL
+	bool "rc-local"
+
+	help
+		Installs a service that runs /etc/rc.local on system startup.
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RPCBIND
+	bool "rpcbind"
+
+	depends on BR2_PACKAGE_RPCBIND
+
+	help
+		Installs a service file for rpcbind.
+
+comment "rpcbind not selected"
+	depends on !BR2_PACKAGE_RPCBIND
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_NFS
+	bool "nfs"
+
+	depends on BR2_PACKAGE_NFS_UTILS
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RPCBIND
+
+comment "nfs needs rpcbind.service and nfs-utils"
+	depends on !BR2_PACKAGE_NFS_UTILS || !BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RPCBIND
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_TVHEADEND
+	bool "tvheadend"
+
+	depends on BR2_PACKAGE_TVHEADEND
+
+	help
+		Installs a service file for tvheadend.
+
+comment "tvheadend not selected"
+	depends on !BR2_PACKAGE_TVHEADEND
+
+
+endmenu # "install service files"
+
+
+
+menuconfig BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP
+	bool "service/timer setup"
+	default y
+
+	help
+		Allows to enable/disable services, timers etc.
+
+
+if BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP
+
+comment "getty"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_SERIALTTY
+	bool "serial-getty@"
+
+	default y if BR2_TARGET_GENERIC_GETTY
+	default n if !BR2_TARGET_GENERIC_GETTY
+
+	help
+		Enables/Disables the serial-getty@ service
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_TTY1
+	bool "getty@tty1"
+
+	help
+		Say y if you want a getty on tty1.
+
+if BR2_PACKAGE_UTIL_LINUX_AGETTY
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY
+	bool "use agetty for getty@"
+
+	help
+		Say y if you want to change the default command for getty@.service
+		to /sbin/agetty. Also allows to specify custom options.
+
+if BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY_OPTIONS
+	string "agetty options"
+
+	default "--noclear -L"
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY_BAUDRATE
+	string "agetty baudrate"
+
+	default "115200"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY_TERMTYPE
+	string "agetty terminal type"
+
+	default "linux"
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+	bool "agetty autologin"
+
+	help
+		Enables automatic login of a specific user on a tty, e.g. tty1.
+
+
+if BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_USER
+	string  "autologin user"
+	default "root"
+
+	help
+		Specify the autologin user.
+
+		The default is root, this is INSECURE.
+
+config  BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_TTY
+	string  "autologin tty"
+	default "tty1"
+
+	help
+		Specify the autologin tty, e.g. tty1.
+
+endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY
+endif # BR2_PACKAGE_UTIL_LINUX_AGETTY
+
+comment "systemd services"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_NETWORKD
+	bool "systemd-networkd"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_NETWORKD
+
+	help
+		Select whether systemd-networkd should be included in multi-user.target.
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TIMESYNCD
+	bool "systemd-timesyncd"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_TIMESYNCD
+
+	help
+		Enable/Disable systemd-timesyncd (sysinit and multi-user targets).
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TIMESYNCD_SERVER
+	string "specify ntp servers for systemd-timesyncd"
+	default ""
+
+	depends on BR2_PACKAGE_SYSTEMD_TIMESYNCD
+
+	help
+		If non-empty, creates /etc/systemd/timesyncd.conf.
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_RESOLVED
+	bool "systemd-resolved"
+	default y
+
+	help
+		Enable/Disable systemd-resolved.
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_REMOTEFS_TARGET
+	bool "remote-fs.target"
+	default y
+
+	help
+		Select whether remote-fs.target should be included in multi-user.target.
+
+comment "other services"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AVAHI_DAEMON
+	bool "avahi-daemon"
+	default y
+
+	depends on BR2_PACKAGE_AVAHI_DAEMON
+
+	help
+		Enable/Disable avahi-daemon socket/service (multi-user target).
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_DROPBEAR
+	bool    "dropbear"
+	default y
+
+	depends on BR2_PACKAGE_DROPBEAR
+
+	help
+		Enable/Disable dropbear (multi-user target).
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_MONGOOSE
+	bool "mongoose"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_MONGOOSE
+
+	help
+		Enable/Disable mongoose (multi-user target).
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_RCLOCAL
+	bool "rc-local"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RCLOCAL
+
+	help
+		Enable/Disable rc-local (multi-user target).
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_RPCBIND
+	bool "rpcbind"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RPCBIND
+
+	help
+		Enable/Disable rpcbind (multi-user target).
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_NFS
+	bool "nfs"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_RPCBIND
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_NFS
+
+	select BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_RPCBIND
+
+	help
+		Enable/Disable nfs (multi-user target).
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TLP
+	bool "TLP"
+	default y
+
+	depends on BR2_PACKAGE_TLP
+
+	help
+		Enable/Disable TLP (multi-user, sleep targets).
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TVHEADEND
+	bool "tvheadend"
+	default n
+
+	depends on BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_TVHEADEND
+
+	help
+		Enable/Disable tvheadend (multi-user target).
+
+
+endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP
+
+
+menu "target setup"
+
+comment "enable/disable services"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SETUP_ENABLE_UNITS
+	string  "enable services/units"
+	default ""
+
+	help
+		Specify additional services to enable.
+
+		Syntax: unit[=target], adds unit to target (defaults to multi-user)
+
+		Sockets and timers can also be specified with the correct file extension,
+		".service" can be omitted.
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SETUP_DISABLE_UNITS
+	string  "enable services/units"
+	default ""
+
+	help
+		Specify services that should be disabled.
+
+		Syntax: unit[=target], removes unit from target (defaults to multi-user)
+
+		Sockets and timers can also be specified with the correct file extension,
+		".service" can be omitted.
+
+endmenu # "target setup"
+
+menu "Network"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_PREDICTABLE
+	bool "Predictable Network Interface Names"
+	default y
+
+	help
+		Say y if you want to stick with traditional network interface names
+		like "eth0" instead of "enp5s0" etc.
+
+		http://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
+
+# not implemented:
+if n
+comment "rename network interfaces based on mactab"
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_MACTAB
+	string  "mactab file"
+	default ""
+
+	help
+		Can be used to import a mactab file and create appropriate .link files
+		in /etc/systemd/network for them.
+
+		The mactab file format is:
+
+		rename interface with $$mac_addr to $$new_interface_name:
+
+		  line ::= <new interface name> <mac addr>
+
+		rename interface with $$mac_addr to ether<auto>
+
+		  line ::= <mac addr>
+
+		keep interface with $$mac_addr as-is
+
+		  line ::= "-" <mac addr>
+
+		comment:
+		  line ::= "#"<comment string>
+
+
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
+	bool "create a default network bridge [NOT IMPLEMENTED]"
+	default n
+
+if BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_NAME
+	string  "bridge name"
+	default "lan0"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_INTERFACES
+	string  "bridge interfaces"
+	default "eth*"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_DHCP
+	string  "acquire ip addr via dhcp"
+	default "v4"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_MACADDR
+	string "mac address"
+	default ""
+
+	help
+		Leave empty for machine-id based mac addr.
+
+endif # BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
+endif # n
+
+endmenu # "Network"
+
+
+menu "Misc"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_JOURNALD_VOLATILE
+	string  "journald storage type"
+	default "volatile"
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_JOURNALD_COMPRESS
+	bool    "compress journal"
+	default y
+
+	depends on BR2_PACKAGE_SYSTEMD_ALL_EXTRAS
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_POWER_KEY
+	string  "change power button action"
+	default ""
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_SUSPEND_KEY
+	string  "change suspend button action"
+	default ""
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_HIBERNATE_KEY
+	string  "change hibernate button action"
+	default ""
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_LID_SWITCH
+	string  "change lid switch action"
+	default ""
+
+
+endmenu # "Misc"
+
+
+endif # BR2_PACKAGE_SYSTEMD_HACKS

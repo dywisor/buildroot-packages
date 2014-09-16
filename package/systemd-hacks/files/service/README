@@ -1,0 +1,11 @@
+# <origin> <unit file>
+gentoo     avahi-daemon.service
+arch       mongoose.service
+gentoo     nfsd.service
+gentoo     proc-fs-nfsd.mount
+self       rc-local.service
+gentoo     rpcbind.service
+gentoo     rpc-mountd.service
+gentoo     rpc-statd.service
+self       tvheadend-resume.service
+arch       tvheadend.service

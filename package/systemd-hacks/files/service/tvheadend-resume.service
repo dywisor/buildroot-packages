@@ -1,0 +1,16 @@
+[Unit]
+Description=tvheadend suspend/resume
+Before=sleep.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/systemctl is-enabled tvheadend
+#ExecStartPre=/bin/systemctl is-active tvheadend
+ExecStart=/bin/systemctl stop tvheadend
+ExecStop=/bin/systemctl start tvheadend
+
+[Install]
+WantedBy=sleep.target
+Also=tvheadend.service
