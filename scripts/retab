@@ -1,0 +1,53 @@
+#!/bin/sh
+if [ -n "${BASH_VERSION-}" ]; then
+   repeat() {
+      local __repeat_n __repeat_i
+      __repeat_n="${1:?}"; shift
+      __repeat_i=0
+
+      while [ ${__repeat_i} -lt ${__repeat_n} ]; do
+         "$@" || return
+         __repeat_i=$(( ${repeat_i} + 1 ))
+      done
+   }
+   export -f repeat
+elif hash repeat 2>/dev/null; then
+   true
+else
+   echo "ERR: missing repeat command" 1>&2
+   exit 99
+fi
+
+ffind_all() {
+   find -H package/ -type f \( -name Config.in -or -name '?*.mk' \)
+}
+ffind_git() {
+   git ls-tree -r --name-only  HEAD -- package/ | \
+      grep -E -- '/(Config[.]in|[^/][.]mk)'
+}
+
+ffind() { ffind_${_FFIND} "$@"; }
+
+case "${1-}" in
+   all|--all|-a)
+      _FFIND=all
+   ;;
+   ''|git)
+      _FFIND=git
+   ;;
+   *)
+      echo "unknown file-find type: ${1}" 1>&2
+      exit 64
+   ;;
+esac
+
+echo "Editing files ..."
+ffind | xargs repeat 10 sed -r -i -e 's,^(\t*)   ,\1\t,'
+
+echo "Checking for space chars:"
+if ffind | xargs grep ^' '; then
+   echo "whitespace found - check && fix"
+   exit 2
+else
+   echo "OK"
+fi
