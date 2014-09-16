@@ -252,7 +252,7 @@ endef
 #  -- unreachable (only systemd supported so far)
 define TLP_INSTALL_INIT_SYSV
 #  tlp.init [sysV]
-   $(TLP_DOEXE) $(@D)/tlp.init $(TARGET_DIR)/etc/init.d/S80tlp
+	$(TLP_DOEXE) $(@D)/tlp.init $(TARGET_DIR)/etc/init.d/S80tlp
 endef
 
 
