@@ -10,4 +10,10 @@ endif
 
 	source package/systemd-hacks/Config.in
 
+menu "shlib"
+	source package/shlibcc/Config.in
+	source package/shlib/Config.in
+	source package/shlib-src/Config.in
+endmenu
+
 endmenu

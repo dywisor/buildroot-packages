@@ -1,0 +1,51 @@
+config BR2_PACKAGE_SHLIB_SRC
+	bool "shlib modules"
+
+	help
+		shell module library - module files
+
+if BR2_PACKAGE_SHLIB_SRC
+	choice
+		prompt "module loader"
+		default BR2_PACKAGE_SHLIB_SRC_LOADER_NONE
+
+		help
+			Select a module file loader, each with its pros&cons (or none).
+
+		config BR2_PACKAGE_SHLIB_SRC_LOADER_NONE
+			bool "none"
+
+			help
+				Disables the installation of the module loader.
+
+		config BR2_PACKAGE_SHLIB_SRC_LOADER_STATIC
+			bool "static"
+
+			help
+				Installs a module loader that relies on statically resolved
+				dependencies (at build time).
+
+				  + works with most shells (ash, dash, bash, ...)
+				  + faster module load time
+				  - very limited support for more than one module root
+				  - needs about 1M disk space, but compresses well (~24k)
+
+		config BR2_PACKAGE_SHLIB_SRC_LOADER_DYNAMIC
+			bool "dynamic"
+
+			depends on BR2_PACKAGE_BASH
+
+			help
+				Installs the dynamic module loader, which resolved dependencies
+				at runtime and is able to handle multiple module roots.
+
+				  + supports multiple module roots (SHLIB_PATH=/A:/B)
+				  + less disk space required
+				  - slower module load time
+				  - bash-only
+
+		comment "dynamic loader needs bash"
+			depends on !BR2_PACKAGE_BASH
+	endchoice
+
+endif # BR2_PACKAGE_SHLIB_SRC
