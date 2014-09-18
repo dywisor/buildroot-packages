@@ -5,7 +5,7 @@
 ################################################################################
 
 SHLIB_SRC_VERSION       = 0.2.908
-SHLIB_SRC__GITREF       = a08600f0b9b0f13a3ccefefd6a3bcdd1d4e737f6
+SHLIB_SRC__GITREF       = $(SHLIB_SRC_VERSION)
 SHLIB_SRC_SOURCE        = shlib-$(SHLIB_SRC__GITREF).tar.gz
 SHLIB_SRC_SITE          = $(call github,dywisor,shlib,$(SHLIB_SRC__GITREF))
 SHLIB_SRC_LICENSE       = GPLv2+
