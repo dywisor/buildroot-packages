@@ -48,4 +48,15 @@ if BR2_PACKAGE_SHLIB_SRC
 			depends on !BR2_PACKAGE_BASH
 	endchoice
 
+	config BR2_PACKAGE_SHLIB_SRC_LOADER_STATIC_PROVIDE_LIB
+		bool "provide shlib.sh library file"
+		default y
+
+		depends on !BR2_PACKAGE_SHLIB
+		depends on BR2_PACKAGE_SHLIB_SRC_LOADER_STATIC
+
+		help
+			Installs /usr/share/shlib/default/shlib.sh as staticloader script file.
+
+
 endif # BR2_PACKAGE_SHLIB_SRC
