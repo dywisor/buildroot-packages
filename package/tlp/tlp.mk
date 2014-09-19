@@ -76,6 +76,17 @@ TLP__MAKEOPTS += TLP_NO_BASHCOMP=1
 # pm-utils not available anyway, no need to install related files
 TLP__MAKEOPTS += TLP_NO_PMUTILS=1
 
+
+# POST_PATCH: replace-conffile [optional]
+ifneq ($(call qstrip,$(BR2_PACKAGE_TLP_CONFIG)),)
+define TLP_DO_REPLACE_CONFFILE
+#  import custom config file
+	rm    -- $(@D)/default
+	cp -L -- '$(call qstrip,$(BR2_PACKAGE_TLP_CONFIG))' $(@D)/default
+endef
+TLP_POST_PATCH_HOOKS += TLP_DO_REPLACE_CONFFILE
+endif
+
 # commands that will be passed to editsrc
 TLP__EDITSRC =
 
@@ -140,19 +151,6 @@ TLP__EDITSRC += MACRO TLP_DEBUG _
 ifneq ($(call qstrip,$(TLP__CONFFILE)),/etc/default/tlp)
 TLP__EDITSRC += MACRO conffile "$(TLP__CONFFILE)"
 endif
-
-
-
-# POST_PATCH: replace-conffile [optional]
-ifneq ($(call qstrip,$(BR2_PACKAGE_TLP_CONFIG)),)
-define TLP_DO_REPLACE_CONFFILE
-#  import custom config file
-	rm    -- $(@D)/default
-	cp -L -- '$(call qstrip,$(BR2_PACKAGE_TLP_CONFIG))' $(@D)/default
-endef
-TLP_POST_PATCH_HOOKS += TLP_DO_REPLACE_CONFFILE
-endif
-
 
 # POST_BUILD:
 #  replace tpacpi-bat script
