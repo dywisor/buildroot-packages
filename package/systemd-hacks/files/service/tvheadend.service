@@ -3,6 +3,7 @@ Description=tvheadend
 After=tmp.mount
 After=network.target
 After=remote-fs.target
+After=systemd-timesyncd.service
 # # automatically stop when entering any sleep state
 #Conflicts=sleep.target
 

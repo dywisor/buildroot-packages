@@ -229,16 +229,6 @@ config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TIMESYNCD
 	help
 		Enable/Disable systemd-timesyncd (sysinit and multi-user targets).
 
-
-config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TIMESYNCD_SERVER
-	string "specify ntp servers for systemd-timesyncd"
-	default ""
-
-	depends on BR2_PACKAGE_SYSTEMD_TIMESYNCD
-
-	help
-		If non-empty, creates /etc/systemd/timesyncd.conf.
-
 config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_RESOLVED
 	bool "systemd-resolved"
 	default y
@@ -450,6 +440,18 @@ config BR2_PACKAGE_SYSTEMD_HACKS_MISC_JOURNALD_COMPRESS
 	default y
 
 	depends on BR2_PACKAGE_SYSTEMD_ALL_EXTRAS
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_TIMESYNCD_NTP
+	string  "timesyncd NTP servers"
+	default ""
+
+	depends on BR2_PACKAGE_SYSTEMD_TIMESYNCD
+
+config BR2_PACKAGE_SYSTEMD_HACKS_MISC_TIMESYNCD_NTP_FALLBACK
+	string  "timesyncd fallback NTP servers"
+	default ""
+
+	depends on BR2_PACKAGE_SYSTEMD_TIMESYNCD
 
 config BR2_PACKAGE_SYSTEMD_HACKS_MISC_POWER_KEY
 	string  "change power button action"

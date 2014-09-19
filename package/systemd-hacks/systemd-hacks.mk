@@ -114,6 +114,30 @@ SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += SYSTEMD_HACKS_DO_SED_JOURNALD
 endif
 ### end journald.conf
 
+### timesyncd.conf edits
+SYSTEMD_HACKS__TIMESYNCD_SED =
+
+ifneq ($(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_MISC_TIMESYNCD_NTP)),)
+SYSTEMD_HACKS__TIMESYNCD_SED += \
+	$(call SYSTEMD_HACKS__GET_CONFEDIT_EXPR,NTP,\
+		$(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_MISC_TIMESYNCD_NTP)))
+endif
+
+ifneq ($(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_MISC_TIMESYNCD_NTP_FALLBACK)),)
+SYSTEMD_HACKS__TIMESYNCD_SED += \
+	$(call SYSTEMD_HACKS__GET_CONFEDIT_EXPR,FallbackNTP,\
+		$(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_MISC_TIMESYNCD_NTP_FALLBACK)))
+endif
+
+ifneq ($(SYSTEMD_HACKS__TIMESYNCD_SED),)
+define SYSTEMD_HACKS_DO_SED_TIMESYNCD
+	sed -r -i '$(TARGET_DIR)/etc/systemd/timesyncd.conf' \
+		$(SYSTEMD_HACKS__TIMESYNCD_SED)
+endef
+SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += SYSTEMD_HACKS_DO_SED_TIMESYNCD
+endif
+### end timesyncd.conf
+
 ### logind.conf edits
 SYSTEMD_HACKS__LOGIND_SED =
 
@@ -446,25 +470,6 @@ SYSTEMD_HACKS__UNITS_TO_ENABLE  += systemd-timesyncd
 SYSTEMD_HACKS__UNITS_TO_ENABLE  += systemd-timesyncd=sysinit
 else
 SYSTEMD_HACKS__UNITS_TO_DISABLE += systemd-timesyncd
-endif
-
-ifneq ($(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TIMESYNCD_SERVER)),)
-define SYSTEMD_HACKS_DO_GEN_TIMESYNCD
-	{ \
-		set -- $(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_TIMESYNCD_SERVER)) && \
-		[ $$# -gt 0 ] && \
-		printf "%s\n%s\n" \
-			"[Time]" \
-			"Servers=$$*"; \
-	} > '$(@D)/timesyncd.conf'
-endef
-SYSTEMD_HACKS_POST_BUILD_HOOKS += SYSTEMD_HACKS_DO_GEN_TIMESYNCD
-
-define SYSTEMD_HACKS_DO_INS_TIMESYNCD
-	$(INSTALL) -D -m 0644 -- '$(@D)/timesyncd.conf' \
-		'$(TARGET_DIR)/etc/systemd/system/timesyncd.conf'
-endef
-SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += SYSTEMD_HACKS_DO_INS_TIMESYNCD
 endif
 
 ifeq ($(BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_RESOLVED),y)

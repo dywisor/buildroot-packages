@@ -18,6 +18,9 @@
 [Unit]
 Description=Avahi mDNS/DNS-SD Stack
 Requires=avahi-daemon.socket
+After=network.target
+After=systemd-resolved.service
+After=systemd-timesyncd.service
 
 [Service]
 Type=dbus
