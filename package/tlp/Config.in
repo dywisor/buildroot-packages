@@ -1,7 +1,7 @@
 comment "TLP needs udev /dev management"
 	depends on !BR2_PACKAGE_HAS_UDEV
 
-comment "TLP needs systemd or pm-utils"
+comment "TLP needs systemd" # or pm-utils
 	depends on ! ( BR2_PACKAGE_SYSTEMD )
 
 comment "TLP needs a shell"
@@ -9,12 +9,15 @@ comment "TLP needs a shell"
 
 menuconfig BR2_PACKAGE_TLP
 	bool   "TLP"
-	default n
 
 	depends on BR2_PACKAGE_HAS_UDEV
 	depends on ( BR2_PACKAGE_SYSTEMD )
-
 	depends on ( BR2_PACKAGE_BUSYBOX || BR2_PACKAGE_DASH || BR2_PACKAGE_BASH )
+
+	depends on BR2_USE_WCHAR          # sed, gawk
+	depends on BR2_USE_MMU            # gawk
+	depends on !BR2_PREFER_STATIC_LIB # gawk
+	depends on BR2_LARGEFILE          # hdparm
 
 	select BR2_PACKAGE_HDPARM
 	select BR2_PACKAGE_GAWK
@@ -111,6 +114,7 @@ if BR2_PACKAGE_TLP
 
 		config BR2_PACKAGE_TLP_SYSTYPE_MOBILE
 			bool "mobile device w/ battery"
+
 			help
 				Choose this for systems that freely switch between AC/BAT.
 
@@ -118,6 +122,9 @@ if BR2_PACKAGE_TLP
 
 		config BR2_PACKAGE_TLP_SYSTYPE_THINKPAD
 			bool "IBM/Lenovo ThinkPad"
+
+			depends on BR2_i386 || BR2_x86_64
+
 			help
 				Choose this for mobile systems that support battery charge
 				threshold control - usually ThinkPads woth a specific kernel
@@ -166,21 +173,14 @@ if BR2_PACKAGE_TLP
 
 menu "Features"
 
-	config BR2_PACKAGE_TLP_FEATURE_ETHTOOL
-		bool    "add support for wake on lan disable"
-		default n
-
-		select BR2_PACKAGE_ETHTOOL
-
-		help
-			Say y to pull in ethtool for controlling (disabling) wake on lan.
-			Wired ethernet interfaces only.
-
+	comment "select ethtool for wake on lan support"
+		depends on !BR2_PACKAGE_ETHTOOL
 
 	config BR2_PACKAGE_TLP_FEATURE_IW
 		bool "add support for wireless devices (iw)"
 		default y if ( BR2_PACKAGE_TLP_SYSTYPE_MOBILE || BR2_PACKAGE_TLP_SYSTYPE_THINKPAD )
-		default n if ! ( BR2_PACKAGE_TLP_SYSTYPE_MOBILE || BR2_PACKAGE_TLP_SYSTYPE_THINKPAD )
+
+		depends on BR2_TOOLCHAIN_HAS_THREADS # iw->libnl
 
 		select BR2_PACKAGE_IW
 		select BR2_PACKAGE_RFKILL
@@ -195,7 +195,6 @@ menu "Features"
 
 	config BR2_PACKAGE_TLP_FEATURE_WIRELESS_TOOLS
 		bool "add support for wireless devices (wireless-tools)"
-		default n
 
 		select BR2_PACKAGE_WIRELESS_TOOLS
 		select BR2_PACKAGE_RFKILL
@@ -217,21 +216,14 @@ menu "Features"
 			Indicates whether any wireless support has been selected.
 
 
-	config BR2_PACKAGE_TLP_FEATURE_SMART
-		bool   "add support for hdd/ssd smart in tlp-stat"
-		default n
-
-		select BR2_PACKAGE_SMARTMONTOOLS
-
-		help
-			Select y to pull in smartmontools (for tlp-stat).
+	comment "select smartmontools for hdd/ssd smart support in tlp-stat"
+		depends on !BR2_PACKAGE_SMARTMONTOOLS
 
 	config BR2_PACKAGE_TLP_PCILIST
 		bool "install tlp-pcilist"
-		default y if ( BR2_i386 || BR2_x86_64 )
-		default n if ! ( BR2_i386 || BR2_x86_64 )
+		default y
 
-		depends on !BR2_bfin
+		depends on !BR2_bfin # pciutils
 		select BR2_PACKAGE_PCIUTILS
 		select BR2_PACKAGE_TLP_NEED_DEVLIST
 
@@ -244,6 +236,7 @@ menu "Features"
 		bool "install tlp-usblist"
 		default y
 
+		depends on BR2_TOOLCHAIN_HAS_THREADS # usbutils->libusb
 		select BR2_PACKAGE_USBUTILS
 		select BR2_PACKAGE_TLP_NEED_DEVLIST
 
@@ -269,10 +262,13 @@ menu "Features"
 		help
 			Select a implementation for tlp-pcilist/tlp-usblist.
 
+		comment "upstream implementation needs perl"
+			depends on !BR2_PACKAGE_PERL
+
 		config BR2_PACKAGE_TLP_DEVLIST_IMPL_PERL
 			bool "perl"
 
-			select BR2_PACKAGE_PERL
+			depends on BR2_PACKAGE_PERL
 
 			help
 				Choose this to install upstream's usblist/pcilist scripts, which
@@ -290,12 +286,16 @@ menu "Features"
 
 	endchoice
 
+	comment "tpacpi-bat needs perl"
+		depends on BR2_i386 || BR2_x86_64
+		depends on !BR2_PACKAGE_PERL
+
 	config BR2_PACKAGE_TLP_TPACPIBAT
 		bool "install tpacpi-bat"
 		default y if BR2_PACKAGE_TLP_SYSTYPE_THINKPAD
-		default n if !BR2_PACKAGE_TLP_SYSTYPE_THINKPAD
 
-		select BR2_PACKAGE_PERL
+		depends on BR2_i386 || BR2_x86_64
+		depends on BR2_PACKAGE_PERL
 
 		help
 			tpacpi-bat is a program that sets battery charge thresholds for
@@ -318,10 +318,11 @@ menu "Features"
 			help
 				If set to y, creates a symlink to TLP's tpacpi-bat in /usr/bin.
 
+	comment "tlp-rdw requires NetworkManager and TLP w/ wireless"
+		depends on ! ( BR2_PACKAGE_NETWORK_MANAGER && BR2_PACKAGE_TLP_FEATURE_WIRELESS )
 
 	config BR2_PACKAGE_TLP_RDW
 		bool "install tlp-rdw"
-		default n
 
 		depends on BR2_PACKAGE_TLP_FEATURE_WIRELESS
 		depends on BR2_PACKAGE_NETWORK_MANAGER
@@ -332,11 +333,7 @@ menu "Features"
 			Only useful if you have a docking station and/or switch between
 			lan/wifi/wwan connections.
 
-
-	comment "tlp-rdw requires NetworkManager and TLP w/ wireless"
-		depends on ! ( BR2_PACKAGE_NETWORK_MANAGER && BR2_PACKAGE_TLP_FEATURE_WIRELESS )
-
-endmenu
+endmenu # "Features" menu
 
 menu "Configuration File"
 
@@ -360,7 +357,8 @@ menu "Configuration File"
 	config BR2_PACKAGE_TLP_LOAD_MODULES
 		bool "load ThinkPad-specific kernel modules on startup"
 		default y if BR2_PACKAGE_TLP_SYSTYPE_THINKPAD
-		default n if !BR2_PACKAGE_TLP_SYSTYPE_THINKPAD
+
+		depends on BR2_i386 || BR2_x86_64
 
 		help
 			Say y if TLP should try to load kernel modules on startup.
@@ -388,6 +386,6 @@ menu "Configuration File"
 
 			If unsure, use the default or "/etc/default/tlp".
 
-endmenu
+endmenu # "Configuration File" menu
 
 endif # BR2_PACKAGE_TLP
