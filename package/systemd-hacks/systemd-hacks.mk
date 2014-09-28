@@ -229,6 +229,36 @@ SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += \
 	SYSTEMD_HACKS_DO_DISABLE_NET_PREDICTABLE
 endif
 
+ifeq ($(BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE),y)
+define SYSTEMD_HACKS__DEFBRIDGE_QOR
+	$(or $(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_$(1))),$(2))
+endef
+
+define SYSTEMD_HACKS_DO_GEN_NETWORKD_CONFIG
+	test ! -d "$(@D)/netconfig"
+	sh '$(@D)/files/gen-defbridge.sh' -O "$(@D)/netconfig" \
+		--bridge-name $(call SYSTEMD_HACKS__DEFBRIDGE_QOR,NAME,lan0) -- \
+		--bridge-interfaces $(call SYSTEMD_HACKS__DEFBRIDGE_QOR,INTERFACES,) --\
+		--dhcp $(call SYSTEMD_HACKS__DEFBRIDGE_QOR,DHCP,) -- \
+		--macaddr $(call SYSTEMD_HACKS__DEFBRIDGE_QOR,MACADDR,) --
+	test -d "$(@D)/netconfig"
+endef
+SYSTEMD_HACKS_POST_BUILD_HOOKS += SYSTEMD_HACKS_DO_GEN_NETWORKD_CONFIG
+
+define SYSTEMD_HACKS_DO_INSTALL_NETWORKD_CONFIG
+	test -n "$(SHELL)"
+	cd "$(@D)/netconfig" && \
+		find ./ -type f -print0 | \
+			xargs -0 -n 1 -I '{FILE}' $(SHELL) -c \
+				'set -- install -m 0644 -D -- "{FILE}" \
+					"$(TARGET_DIR)/etc/systemd/network/{FILE}" && \
+				printf "%s\n" "$${*}" && \
+				"$${@}"'
+endef
+SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += \
+	SYSTEMD_HACKS_DO_INSTALL_NETWORKD_CONFIG
+endif
+
 ### end network config
 
 

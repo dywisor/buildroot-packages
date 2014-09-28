@@ -397,24 +397,38 @@ config BR2_PACKAGE_SYSTEMD_HACKS_NET_MACTAB
 
 		comment:
 		  line ::= "#"<comment string>
-
+endif # n
 
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
-	bool "create a default network bridge [NOT IMPLEMENTED]"
+	bool "create a default network bridge"
 	default n
+
+	help
+		Allows to configure a simple network bridge.
 
 if BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_NAME
 	string  "bridge name"
 	default "lan0"
 
+	help
+		Name of the network bridge.
+
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_INTERFACES
 	string  "bridge interfaces"
 	default "eth*"
 
+	help
+		Specifiy interfaces that should be part of the network bridge.
+		Wildcards allowed (see systemd.network(1) -> [MATCH] -> Name=).
+
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_DHCP
 	string  "acquire ip addr via dhcp"
 	default "v4"
+
+	help
+		Specify whether the bridge should acquire an ip address via dhcp.
+		Valid choices are v4, v6, both and none. (won't be checked).
 
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_MACADDR
 	string "mac address"
@@ -424,7 +438,7 @@ config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_MACADDR
 		Leave empty for machine-id based mac addr.
 
 endif # BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
-endif # n
+
 
 endmenu # "Network"
 
