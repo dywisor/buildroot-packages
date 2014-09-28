@@ -5,13 +5,13 @@
 ################################################################################
 
 TLP_VERSION         = 0.5.90X
-TLP_LIVEVER_REF     = 542d951efa6010d6fee69f753a6595050f7a591d
+TLP_LIVEVER_REF     = 3aed0b1051640dcefa7940f8de99e8ee543d02bd
 TLP_SOURCE          = tlp-$(TLP_LIVEVER_REF).tar.gz
 TLP_SITE            = $(call github,linrunner,TLP,$(TLP_LIVEVER_REF))
 TLP_LICENSE         = GPLv2+ GPLv3
 TLP_LICENSE_FILES   = COPYING LICENSE
 
-TLP_ADD_LIVEVER_REF = 27f2175dac1ce8550e6e1e5edda28ca5b0c1f0e3
+TLP_ADD_LIVEVER_REF = 44c9b64c3571062ba785c14b21a4279b23671526
 TLP_ADD_SITE        = \
 	$(call github,dywisor,tlp-gentoo-additions,$(TLP_ADD_LIVEVER_REF))
 TLP_ADD_SOURCE      = tlp-gentoo-additions-$(TLP_ADD_LIVEVER_REF).tar.gz

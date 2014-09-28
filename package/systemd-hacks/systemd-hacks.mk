@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-SYSTEMD_HACKS_VERSION       = 20140916
+SYSTEMD_HACKS_VERSION       = 20140924-r3
 SYSTEMD_HACKS_SOURCE        = systemd-hacks_$(SYSTEMD_HACKS_VERSION).xz
 SYSTEMD_HACKS_SITE          = http://yugoloth.de/dywi/dl/scripts
 SYSTEMD_HACKS_LICENSE       = GPLv2+
