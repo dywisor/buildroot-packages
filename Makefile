@@ -5,6 +5,9 @@ ifeq ($(BR),)
 $(error buildroot src dir BR not specified!)
 endif
 
+__EMPTY =
+__TAB   = $(__EMPTY)$(shell printf "\t")$(__EMPTY)
+
 _PKG_DIR  := $(BR)/package/$(PKG_SUBDIR_NAME)
 
 PKG_NAMES := $(foreach d,$(wildcard $(S)/package/*/.),$(notdir $(d:%/.=%)))
@@ -53,7 +56,7 @@ register-config: $(_PKG_DIR)
 	else \
 		echo "setting up Config.in"; \
 		sed \
-			-e '$$i\\tsource "package/$(PKG_SUBDIR_NAME)/Config.in"' \
+			-e '$$i\$(__TAB)source "package/$(PKG_SUBDIR_NAME)/Config.in"' \
 			-i '$(BR)/package/Config.in'; \
 	fi
 
