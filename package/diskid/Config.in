@@ -1,0 +1,23 @@
+config BR2_PACKAGE_DISKID
+	bool "diskid"
+
+	help
+		`diskid` reads disk identifiers from devices and is a replacement for
+		udev's `ata_id` program. This is useful for creating /dev/disk/by-id/
+		links on systems where udev/systemd is not installed,
+		e.g. when /dev is managed by mdev or devtmpfs.
+
+		https://github.com/dywisor/diskid
+
+if BR2_PACKAGE_DISKID
+config BR2_PACKAGE_DISKID_LINK_HELPER
+	bool "install create-diskid-links"
+
+	depends on BR2_PACKAGE_BUSYBOX # script is hardwired to /bin/busybox ash
+
+	help
+		Installs a script for creating diskid links (/sbin/create-diskid-links).
+		Suitable for small systems without disk hotplugging.
+		Not capable of removing diskid links!
+
+endif # BR2_PACKAGE_DISKID

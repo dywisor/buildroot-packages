@@ -16,6 +16,7 @@ menu "shlib"
 	source package/shlib-src/Config.in
 endmenu
 
+	source package/diskid/Config.in
 	source package/better-initramfs/Config.in
 
 endmenu
