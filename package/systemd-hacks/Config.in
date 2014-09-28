@@ -370,8 +370,6 @@ config BR2_PACKAGE_SYSTEMD_HACKS_NET_PREDICTABLE
 
 		http://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 
-# not implemented:
-if n
 comment "rename network interfaces based on mactab"
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_MACTAB
 	string  "mactab file"
@@ -391,13 +389,8 @@ config BR2_PACKAGE_SYSTEMD_HACKS_NET_MACTAB
 
 		  line ::= <mac addr>
 
-		keep interface with $$mac_addr as-is
-
-		  line ::= "-" <mac addr>
-
 		comment:
 		  line ::= "#"<comment string>
-endif # n
 
 config BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE
 	bool "create a default network bridge"

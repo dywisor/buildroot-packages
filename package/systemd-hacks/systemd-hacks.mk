@@ -29,6 +29,18 @@ define SYSTEMD_HACKS__KV_GET_VAL
 	$(or $(word 2,$(subst =, ,$(1))),$(call qstrip,$(2)))
 endef
 
+# RECURSIVE_FILE_INSTALL ( abs_src, rel_dst, filemode:=0644, **TARGET_DIR )
+define SYSTEMD_HACKS__RECURSIVE_FILE_INSTALL
+	test -n '$(SHELL)'
+	cd '$(1)' && \
+		find ./ -type f -print0 | \
+			xargs -0 -n 1 -I '{FILE}' $(SHELL) -c \
+				'set -- install -m $(or $(3),0644) -- "{FILE}" \
+					"$(TARGET_DIR:/=)/$(2:/=)/{FILE}" && \
+				printf "%s\n" "$${*}" && \
+				"$${@}"'
+endef
+
 ### dependencies
 SYSTEMD_HACKS_DEPENDENCIES = systemd
 
@@ -229,6 +241,23 @@ SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += \
 	SYSTEMD_HACKS_DO_DISABLE_NET_PREDICTABLE
 endif
 
+ifeq ($(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_NET_MACTAB)),)
+else
+define SYSTEMD_HACKS_DO_GEN_NETWORK_NAMEIF
+	test ! -d "$(@D)/nameif-config"
+	sh '$(@D)/files/gen-nameif.sh' "$(@D)/nameif-config" \
+		$(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_NET_MACTAB))
+	test -d "$(@D)/nameif-config"
+endef
+SYSTEMD_HACKS_POST_BUILD_HOOKS += SYSTEMD_HACKS_DO_GEN_NETWORK_NAMEIF
+
+define SYSTEMD_HACKS_DO_INSTALL_NETWORK_NAMEIF
+	$(call SYSTEMD_HACKS__RECURSIVE_FILE_INSTALL,$(@D)/nameif-config,etc/systemd/network,0644)
+endef
+SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += \
+	SYSTEMD_HACKS_DO_INSTALL_NETWORK_NAMEIF
+endif
+
 ifeq ($(BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE),y)
 define SYSTEMD_HACKS__DEFBRIDGE_QOR
 	$(or $(call qstrip,$(BR2_PACKAGE_SYSTEMD_HACKS_NET_DEFAULT_BRIDGE_$(1))),$(2))
@@ -246,14 +275,7 @@ endef
 SYSTEMD_HACKS_POST_BUILD_HOOKS += SYSTEMD_HACKS_DO_GEN_NETWORKD_CONFIG
 
 define SYSTEMD_HACKS_DO_INSTALL_NETWORKD_CONFIG
-	test -n "$(SHELL)"
-	cd "$(@D)/netconfig" && \
-		find ./ -type f -print0 | \
-			xargs -0 -n 1 -I '{FILE}' $(SHELL) -c \
-				'set -- install -m 0644 -D -- "{FILE}" \
-					"$(TARGET_DIR)/etc/systemd/network/{FILE}" && \
-				printf "%s\n" "$${*}" && \
-				"$${@}"'
+	$(call SYSTEMD_HACKS__RECURSIVE_FILE_INSTALL,$(@D)/netconfig,etc/systemd/network,0644)
 endef
 SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += \
 	SYSTEMD_HACKS_DO_INSTALL_NETWORKD_CONFIG
