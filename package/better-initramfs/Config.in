@@ -1,0 +1,28 @@
+comment "better-initramfs needs mdev /dev management and no init system"
+	depends on !BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || !BR2_INIT_NONE
+
+config BR2_PACKAGE_BETTER_INITRAMFS
+	bool "better-initramfs"
+
+	depends on BR2_PACKAGE_BUSYBOX
+	depends on BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV
+	depends on BR2_INIT_NONE
+
+	help
+		An initramfs solution with few dependencies, written in shell script
+		language.
+
+		Supports booting from disk (by dev/label/uuid), BCACHE, LVM, LUKS,
+		software RAID and more.
+
+		https://github.com/slashbeast/better-initramfs/blob/master/README.rst
+
+		In order to get full functionality, one or more of the following
+		packages should be selected:
+
+		  o dropbear   (remote shell)
+		  o lvm2       (LVM)
+		  o cryptsetup (LUKS)
+		  o askpass    (LUKS, remote shell) [not packaged]
+		  o mdadm      (software-RAID)
+		  o suspend    (resume from hibernate) [?]
