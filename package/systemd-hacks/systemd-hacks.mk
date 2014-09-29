@@ -35,7 +35,7 @@ define SYSTEMD_HACKS__RECURSIVE_FILE_INSTALL
 	cd '$(1)' && \
 		find ./ -type f -print0 | \
 			xargs -0 -n 1 -I '{FILE}' $(SHELL) -c \
-				'set -- install -m $(or $(3),0644) -- "{FILE}" \
+				'set -- install -D -m $(or $(3),0644) -- "{FILE}" \
 					"$(TARGET_DIR:/=)/$(2:/=)/{FILE}" && \
 				printf "%s\n" "$${*}" && \
 				"$${@}"'
@@ -289,7 +289,7 @@ endif
 
 # copy files/ from pkgdir
 define SYSTEMD_HACKS_DO_IMPORT_FILES
-	cp -a -- '$(PKGDIR)/files/' '$(@D)/files/'
+	cp -dpR -- '$(PKGDIR)/files/' '$(@D)/files/'
 endef
 SYSTEMD_HACKS_POST_EXTRACT_HOOKS += SYSTEMD_HACKS_DO_IMPORT_FILES
 
