@@ -5,7 +5,7 @@
 ################################################################################
 
 TLP_VERSION         = 0.5.90X
-TLP_LIVEVER_REF     = 3aed0b1051640dcefa7940f8de99e8ee543d02bd
+TLP_LIVEVER_REF     = 8a6d479218f9e55400da06a49405c63682fb86d4
 TLP_SOURCE          = tlp-$(TLP_LIVEVER_REF).tar.gz
 TLP_SITE            = $(call github,linrunner,TLP,$(TLP_LIVEVER_REF))
 TLP_LICENSE         = GPLv2+ GPLv3
@@ -150,6 +150,16 @@ TLP__EDITSRC += MACRO TLP_DEBUG _
 # relocate CONFFILE [optional]
 ifneq ($(call qstrip,$(TLP__CONFFILE)),/etc/default/tlp)
 TLP__EDITSRC += MACRO conffile "$(TLP__CONFFILE)"
+endif
+
+# drop udev files
+ifeq ($(BR2_PACKAGE_HAS_UDEV),y)
+else
+ifeq ($(BR2_INIT_NONE),y)
+TLP__EDITSRC += editmk '/(ln|install).*_ULIB/d'
+else
+$(error "no-udev needs init-none")
+endif
 endif
 
 # POST_BUILD:

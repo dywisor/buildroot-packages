@@ -1,18 +1,17 @@
+if !BR2_INIT_NONE
 comment "TLP needs udev /dev management"
 	depends on !BR2_PACKAGE_HAS_UDEV
 
 comment "TLP needs systemd" # or pm-utils
 	depends on ! ( BR2_PACKAGE_SYSTEMD )
-
+endif
 
 menuconfig BR2_PACKAGE_TLP
-	bool   "TLP"
+	bool "TLP"
 
-	depends on BR2_PACKAGE_HAS_UDEV
-	depends on ( BR2_PACKAGE_SYSTEMD )
+	depends on BR2_PACKAGE_SYSTEMD || BR2_INIT_NONE
 
-	depends on BR2_LARGEFILE          # hdparm
-
+	depends on BR2_LARGEFILE # hdparm
 	select BR2_PACKAGE_HDPARM
 
 	help
@@ -22,7 +21,6 @@ menuconfig BR2_PACKAGE_TLP
 		for Linux without the need to understand every technical detail.
 		Originally designed for laptops, specifically IBM/Lenovo ThinkPads,
 		but capable to run in various environments.
-
 
 		Its features include:
 
@@ -96,6 +94,9 @@ menuconfig BR2_PACKAGE_TLP
 
 
 if BR2_PACKAGE_TLP
+
+	comment "no init system selected, TLP needs to be run manually"
+		depends on BR2_INIT_NONE
 
 	choice
 		prompt "System Type"
@@ -213,7 +214,7 @@ menu "Features"
 
 	config BR2_PACKAGE_TLP_PCILIST
 		bool "install tlp-pcilist"
-		default y
+		default y if !BR2_INIT_NONE
 
 		depends on !BR2_bfin # pciutils
 		select BR2_PACKAGE_PCIUTILS
@@ -226,7 +227,7 @@ menu "Features"
 
 	config BR2_PACKAGE_TLP_USBLIST
 		bool "install tlp-usblist"
-		default y
+		default y if !BR2_INIT_NONE
 
 		depends on BR2_TOOLCHAIN_HAS_THREADS # usbutils->libusb
 		select BR2_PACKAGE_USBUTILS
@@ -310,14 +311,17 @@ menu "Features"
 			help
 				If set to y, creates a symlink to TLP's tpacpi-bat in /usr/bin.
 
-	comment "tlp-rdw requires NetworkManager and TLP w/ wireless"
-		depends on ! ( BR2_PACKAGE_NETWORK_MANAGER && BR2_PACKAGE_TLP_FEATURE_WIRELESS )
+	comment "tlp-rdw requires NetworkManager, TLP w/ wireless and udev /dev management"
+		depends on ! ( \
+			BR2_PACKAGE_NETWORK_MANAGER && BR2_PACKAGE_TLP_FEATURE_WIRELESS && \
+			BR2_PACKAGE_HAS_UDEV )
 
 	config BR2_PACKAGE_TLP_RDW
 		bool "install tlp-rdw"
 
 		depends on BR2_PACKAGE_TLP_FEATURE_WIRELESS
 		depends on BR2_PACKAGE_NETWORK_MANAGER
+		depends on BR2_PACKAGE_HAS_UDEV
 
 		help
 			Say y to install the Radio Device Wizard.
