@@ -26,3 +26,17 @@ config BR2_PACKAGE_BETTER_INITRAMFS
 		  o askpass    (LUKS, remote shell) [not packaged]
 		  o mdadm      (software-RAID)
 		  o suspend    (resume from hibernate) [?]
+
+
+if BR2_PACKAGE_BETTER_INITRAMFS
+
+config BR2_PACKAGE_BETTER_INITRAMFS_KEYMAP_FILE
+	string  "keymap file"
+	default ""
+
+	help
+		better-initramfs supports loading of a keymap file,
+		which helps to get your passphrases accepted ;)
+
+
+endif # BR2_PACKAGE_BETTER_INITRAMFS

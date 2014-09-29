@@ -24,6 +24,24 @@ define BETTER_INITRAMFS_INSFILE
 		$(@D)/sourceroot/$(1) $(TARGET_DIR:/=)/$(or $(2),$(1))
 endef
 
+BETTER_INITRAMFS_KEYMAP_SRC = \
+	$(call qstrip,$(BR2_PACKAGE_BETTER_INITRAMFS_KEYMAP_FILE))
+
+ifeq ($(BETTER_INITRAMFS_KEYMAP_SRC),)
+else
+define BETTER_INITRAMFS_DO_IMPORT_KEYMAP_FILE
+	$(or $(call suitable-extractor,$(BETTER_INITRAMFS_KEYMAP_SRC)),cat) \
+		$(BETTER_INITRAMFS_KEYMAP_SRC) > $(@D)/sourceroot/keymap
+endef
+BETTER_INITRAMFS_POST_EXTRACT_HOOKS += BETTER_INITRAMFS_DO_IMPORT_KEYMAP_FILE
+
+define BETTER_INITRAMFS_DO_INSTALL_KEYMAP_FILE
+	$(call BETTER_INITRAMFS_INSFILE,keymap,,)
+endef
+BETTER_INITRAMFS_POST_INSTALL_TARGET_HOOKS += \
+	BETTER_INITRAMFS_DO_INSTALL_KEYMAP_FILE
+endif
+
 define BETTER_INITRAMFS_DO_EDIT_SOURCES
 	sed -r -i $(@D)/sourceroot/functions.sh \
 		-e 's#/bin/cryptsetup#/usr/sbin/cryptsetup#g'
