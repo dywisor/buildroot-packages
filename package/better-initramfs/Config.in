@@ -38,5 +38,18 @@ config BR2_PACKAGE_BETTER_INITRAMFS_KEYMAP_FILE
 		better-initramfs supports loading of a keymap file,
 		which helps to get your passphrases accepted ;)
 
+config BR2_PACKAGE_BETTER_INITRAMFS_HOOK_DIRS
+	string  "hook dirs"
+	default ""
+
+	help
+		Allows to import initramfs hooks.
+
+		Each dir should contain one or more of the following directories ("hook phases"):
+		  o init
+		  o early
+		  o pre_newroot_mount
+		  o post_newroot_mount [unofficial]
+		  o pre_switch_root
 
 endif # BR2_PACKAGE_BETTER_INITRAMFS
