@@ -1,12 +1,14 @@
 * TLP needs udev and (systemd||pm-utils)
    pm-utils is not packaged, so systemd is a hard dependency
 
+* installation is also allowed when no init system is selected (BR2_INIT_NONE),
+  but don't expect to get anything useful out
+  (can be used for initramfs/embedded/no-hotplug scenarios)
+
 * rfkill packaged separately (in this repo),
   unsure if rfkill from busybox is sufficient [NEEDS TESTING]
 
-* unsure about the sed dependency (maybe busybox sed works, too) [NEEDS TESTING]
-
-* ^~ (g)awk [NEEDS TESTING]
+* sed/(g)awk from busybox seem to work [NEEDS FURTHER TESTING]
 
 * overall, sources are modified heavily (patches + sed-editing) and the
   installation doesn't follow upstream's guidelines closely,
@@ -15,7 +17,6 @@
   scripts, depending on what's configured)
 
 * buildroot has no lsb_release package, using a naive script as replacement
-
 
 
 deviations from upstream
