@@ -44,8 +44,8 @@ ifeq ($(BETTER_INITRAMFS__IMPORT_HOOK_DIRS),)
 else
 define BETTER_INITRAMFS_DO_IMPORT_HOOKS
 	mkdir -p -- $(@D)/sourceroot/hooks
-	for src in $(BETTER_INITRAMFS__IMPORT_HOOK_DIRS); do \
-		cp -dpR -- "$${src}/." $(@D)/sourceroot/hooks/. || exit; \
+	set -e; for src in $(BETTER_INITRAMFS__IMPORT_HOOK_DIRS); do \
+		cp -dpR -- "$${src}/." $(@D)/sourceroot/hooks/.; \
 	done
 endef
 BETTER_INITRAMFS_POST_EXTRACT_HOOKS += BETTER_INITRAMFS_DO_IMPORT_HOOKS

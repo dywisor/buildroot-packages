@@ -431,8 +431,8 @@ SYSTEMD_HACKS__UNITS_TO_INSTALL += rc-local.service
 define SYSTEMD_HACKS_DO_SVCFILE_RCLOCAL_INSTALL
 	# create /etc/rc.local if necessary
 	mkdir -p -- "$(TARGET_DIR)/etc"
-	for f in $(TARGET_DIR)/etc/rc.local; do \
-		test -h $$f || test -e $$f || touch $$f; \
+	set -e; for f in $(TARGET_DIR:/=)/etc/rc.local; do \
+		test -h "$$f" || test -e "$$f" || touch "$$f"; \
 	done
 endef
 SYSTEMD_HACKS_POST_INSTALL_TARGET_HOOKS += \
