@@ -76,7 +76,7 @@ config BR2_PACKAGE_SYSTEMD_HACKS_SVCFILE_MONGOOSE
 	help
 		Installs a service file for the mongoose web server.
 
-		Also installs a default config file to /etc/mongoose.conf.
+		Also installs the default config file /etc/mongoose/default.conf.
 
 comment "mongoose not selected"
 	depends on !BR2_PACKAGE_MONGOOSE

@@ -1,6 +1,6 @@
 # <origin> <unit file>
 gentoo     avahi-daemon.service
-arch       mongoose.service
+arch/self  mongoose.service
 gentoo     nfsd.service
 gentoo     proc-fs-nfsd.mount
 self       rc-local.service
