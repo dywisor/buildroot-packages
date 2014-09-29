@@ -1,11 +1,15 @@
-comment "better-initramfs needs mdev /dev management and no init system"
-	depends on !BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || !BR2_INIT_NONE
+comment "better-initramfs needs mdev or devtmpfs /dev management and no init system"
+	depends on !BR2_INIT_NONE || ! ( \
+		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || \
+		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_DEVTMPFS )
 
 config BR2_PACKAGE_BETTER_INITRAMFS
 	bool "better-initramfs"
 
 	depends on BR2_PACKAGE_BUSYBOX
-	depends on BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV
+	depends on ( \
+		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || \
+		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_DEVTMPFS )
 	depends on BR2_INIT_NONE
 
 	help
