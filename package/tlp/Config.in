@@ -4,24 +4,16 @@ comment "TLP needs udev /dev management"
 comment "TLP needs systemd" # or pm-utils
 	depends on ! ( BR2_PACKAGE_SYSTEMD )
 
-comment "TLP needs a shell"
-	depends on ! ( BR2_PACKAGE_BUSYBOX || BR2_PACKAGE_DASH || BR2_PACKAGE_BASH )
 
 menuconfig BR2_PACKAGE_TLP
 	bool   "TLP"
 
 	depends on BR2_PACKAGE_HAS_UDEV
 	depends on ( BR2_PACKAGE_SYSTEMD )
-	depends on ( BR2_PACKAGE_BUSYBOX || BR2_PACKAGE_DASH || BR2_PACKAGE_BASH )
 
-	depends on BR2_USE_WCHAR          # sed, gawk
-	depends on BR2_USE_MMU            # gawk
-	depends on !BR2_PREFER_STATIC_LIB # gawk
 	depends on BR2_LARGEFILE          # hdparm
 
 	select BR2_PACKAGE_HDPARM
-	select BR2_PACKAGE_GAWK
-	select BR2_PACKAGE_SED
 
 	help
 		Linux Advanced Power Management
