@@ -1,0 +1,102 @@
+if BR2_PACKAGE_INITRAMFS_LIRAM_INITRAMFS
+
+comment "liram-initramfs needs mdev /dev management and no init system"
+	depends on !BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || !BR2_INIT_NONE
+
+menuconfig BR2_PACKAGE_LIRAM_INITRAMFS
+	bool "liram-initramfs"
+
+	depends on BR2_PACKAGE_BUSYBOX
+	depends on BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV
+	depends on BR2_INIT_NONE
+	select BR2_PACKAGE_HAS_INITRAMFS
+
+	help
+		An initramfs solution written in shell script language, targeted at
+		loading systems into RAM (and booting them afterwards).
+		Use cases include booting from Gentoo stage3 tarballs as well as
+		booting semi-persistent systems (e.g. VDR).
+
+		Also supports booting normal systems. Depending on the system setup,
+		better-initramfs might be a more suitable choice.
+
+		Basic Features (not depending on the boot "mode"):
+		  o zram autoswap, partitions a fraction of the system memory into 1..<cpu core count> swap "disks"
+		  o premounting of "simple" mountpoints in the real root (disk drives, tmpfs, loopback image files)
+		  o limited support for LVM and software RAID, no support for LUKS
+		  o creation of per-user temporary directories (/tmp/users/<name>)
+		  o execution of real-root-provided hook scripts
+		  o set -u zealot.
+
+		The boot-to-RAM mode is split up into a specific part that populates
+		the rootfs, which is offloaded to a so-called "liram layout", and
+		a generic part that creates an empty rootfs (as tmpfs/zram/...),
+		mounts a source for image files ("sysdisk", local disk or NFS)
+		and manages the overall boot process.
+		The sysdisk usually contains subdirectories with the actual image files
+		("slot" directories, e.g. "armv5tel/factory").
+
+		layouts don't need to be part of the initramfs, and can be injected
+		via http, rsync or the sysdisk instead.
+		Basically, a layout extracts tarballs, mounts squashfs images and tmpfs.
+		The idea is to combine large "factory" image files (rootfs, usr etc.
+		from a build host) with small machine-specific files (/etc, /var or just
+		subdirs like /etc/vdr). Persistence is achieved by re-packing an image
+		file.
+
+		Features depending on the layout:
+		  o zram as tmpfs-like disk mounts
+		  o "writable" squashfs mounts (as aufs: squashfs image(s) + tmpfs/zram)
+		  o arbitrary tmpfs/zram subdir mounts
+		  o hand-over of firmware files and kernel modules
+
+		Most of these features are always available,
+		but need to be exposed/used by the layout.
+
+		Optional Dependencies:
+		  o full-featured tar, the busybox variant does not accept -p switch etc.
+		  o ip (iproute2 or busybox) for network support
+		  o rsync for --progress reports during file transfer
+		  o mkswap/swapon for zram autoswap
+		  o mkfs.ext4/mkfs.btrfs for zram disks
+		  o aufs3-patched kernel
+		  o mdadm/lvm2
+
+		Optional Dependencies for the rootfs:
+		  o liram-userspace/baselayout [NOT PACKAGED]
+		  o liram-manage for persistent systems (image file creation helper) [NOT PACKAGED]
+
+		liram is a subproject of shlib and has no dedicated website.
+		https://github.com/dywisor/shlib
+
+if BR2_PACKAGE_LIRAM_INITRAMFS
+
+config BR2_PACKAGE_PROVIDES_INITRAMFS
+	default "liram-initramfs"
+
+config BR2_PACKAGE_LIRAM_INITRAMFS_NETSETUP_HELPER
+	bool "install net-setup"
+
+	help
+		Installs /sbin/net-setup for rescue shell usage,
+		which exposes the initramfs' network setup functionality.
+		Not to be confused with the "net-setup" tool found in some live systems.
+
+config BR2_PACKAGE_LIRAM_INITRAMFS_DROPBEAR_HELPER
+	bool "install start-dropbear"
+
+	depends on BR2_PACKAGE_DROPBEAR
+
+	help
+		Installs /usr/sbin/start-dropbear for rescue shell usage,
+		which simply starts the dropbear SSH daemon.
+
+config BR2_PACKAGE_LIRAM_INITRAMFS_LAYOUT_DIRS
+	string  "directories with additional layout files"
+	default ""
+
+	help
+		Allows to import layout files to /liram/layouts.
+
+endif # BR2_PACKAGE_LIRAM_INITRAMFS
+endif # BR2_PACKAGE_INITRAMFS_LIRAM_INITRAMFS

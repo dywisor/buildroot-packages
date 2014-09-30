@@ -1,9 +1,11 @@
+if BR2_PACKAGE_INITRAMFS_BETTER_INITRAMFS
+
 comment "better-initramfs needs mdev or devtmpfs /dev management and no init system"
 	depends on !BR2_INIT_NONE || ! ( \
 		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || \
 		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_DEVTMPFS )
 
-config BR2_PACKAGE_BETTER_INITRAMFS
+menuconfig BR2_PACKAGE_BETTER_INITRAMFS
 	bool "better-initramfs"
 
 	depends on BR2_PACKAGE_BUSYBOX
@@ -11,6 +13,7 @@ config BR2_PACKAGE_BETTER_INITRAMFS
 		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV || \
 		BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_DEVTMPFS )
 	depends on BR2_INIT_NONE
+	select BR2_PACKAGE_HAS_INITRAMFS
 
 	help
 		An initramfs solution with few dependencies, written in shell script
@@ -33,6 +36,9 @@ config BR2_PACKAGE_BETTER_INITRAMFS
 
 
 if BR2_PACKAGE_BETTER_INITRAMFS
+
+config BR2_PACKAGE_PROVIDES_INITRAMFS
+	default "better-initramfs"
 
 config BR2_PACKAGE_BETTER_INITRAMFS_KEYMAP_FILE
 	string  "keymap file"
@@ -57,3 +63,4 @@ config BR2_PACKAGE_BETTER_INITRAMFS_HOOK_DIRS
 		  o pre_switch_root
 
 endif # BR2_PACKAGE_BETTER_INITRAMFS
+endif # BR2_PACKAGE_INITRAMFS_BETTER_INITRAMFS
