@@ -21,8 +21,11 @@ endif
 
 HOST_SHLIB_SRC_DEPENDENCIES = host-shlibcc
 
-SHLIB_SHLIBCC   = $(SHLIBCC) -S $(HOST_DIR)$(SHLIB_SRC_INCLUDEDIR)
-SHLIB_RUNSCRIPT = $(HOST_DIR)/usr/bin/shlib-runscript
+SHLIB_SHLIBCC        = $(SHLIBCC) -S $(HOST_DIR:/=)$(SHLIB_SRC_INCLUDEDIR)
+SHLIB_RUNSCRIPT      = $(HOST_DIR:/=)/usr/bin/shlib-runscript
+SHLIB_GENSCRIPT_PROG = $(HOST_DIR:/=)/usr/bin/shlib-genscript
+SHLIB_GENSCRIPT_ARGS = --verify --interpreter /bin/sh --chmod 0644
+SHLIB_GENSCRIPT      = $(SHLIB_GENSCRIPT_PROG) $(SHLIB_GENSCRIPT_ARGS)
 
 SHLIB_SRC__MAKEOPTS_COMMON =
 SHLIB_SRC__MAKEOPTS_COMMON += PREFIX=/usr
@@ -68,9 +71,48 @@ endif
 endif
 
 # host shlib-src
+define SHLIB_SRC__PRINTVAR
+	printf "%s=%s%s%s\n" "$(1)" "\"" "$(call qstrip,$(2))" "\""
+endef
+
 define HOST_SHLIB_SRC_BUILD_CMDS
 	$(MAKE1) -C $(@D) $(HOST_SHLIB_SRC__MAKEOPTS) clean-dynloader
 	$(MAKE1) -C $(@D) $(HOST_SHLIB_SRC__MAKEOPTS) dynloader
+
+	# build genscript helper
+	## defsym
+	mkdir -p -- $(@D)/build/genscript
+
+	{ \
+		$(call SHLIB_SRC__PRINTVAR,export SHLIB_PRJROOT,$(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)); \
+		$(call SHLIB_SRC__PRINTVAR,export SHLIBCC_ARGS,$(SHLIBCC_FLAGS)); \
+		$(call SHLIB_SRC__PRINTVAR,export SHLIBCC_LIB_ARGS, \$${SHLIBCC_ARGS} --as-lib); \
+		$(call SHLIB_SRC__PRINTVAR,DEFAULT_SHLIB_TARGET,$(SHLIB_SRC_SHAREDIR)/shlib.sh); \
+	} > $(@D)/build/genscript/defsym.inject
+
+	## shlibcc wrapper (\$${SHLIB_PRJROOT}/CC)
+	{ \
+		printf "%s\n" '#!/bin/sh'; \
+		printf "%s" "exec"; \
+		$(foreach exe,$(call qstrip,$(SHLIBCC_PROG)),\
+			printf " %s\n\t%s" "\\" "\"$(exe)\"";) \
+		\
+		$(foreach arg,\
+			$(call qstrip,$(SHLIBCC_FLAGS)) \
+			--shlib-dir=\"$(call qstrip,$(HOST_DIR:/=)$(SHLIB_SRC_INCLUDEDIR))\" \
+			\"\$$@\",\
+				printf " %s\n\t\t%s" "\\" "$(arg)";) \
+		\
+		printf "\n"; \
+	} > $(@D)/build/genscript/CC_wrapper
+
+	## genscript.sh
+	$(SHLIBCC_PROG) --stable-sort --shlib-dir=$(@D)/lib \
+		--depfile --main $(@D)/build-scripts/generate_script.sh \
+		--defsym $(@D)/build/genscript/defsym.inject \
+		--short-header --strip-virtual -u \
+		--keep-safety-checks=y --enable-debug-code=y \
+		--output $(@D)/build/genscript/genscript.sh
 endef
 
 define HOST_SHLIB_SRC_INSTALL_CMDS
@@ -79,6 +121,12 @@ define HOST_SHLIB_SRC_INSTALL_CMDS
 		$(addprefix install-,full-src dynloader)
 
 	cp -R -- $(@D)/scripts/. $(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)/scripts
+
+	$(INSTALL) -D -m 0755 -- $(@D)/build/genscript/CC_wrapper \
+		$(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)/CC
+
+	$(INSTALL) -D -m 0755 -- $(@D)/build/genscript/genscript.sh \
+		$(SHLIB_GENSCRIPT_PROG)
 endef
 
 
