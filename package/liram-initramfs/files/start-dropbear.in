@@ -1,1 +1,37 @@
-die "${SCRIPT_NAME} not available."
+#!/bin/sh
+#@section vars
+DROPBEAR_PIDFILE=/var/run/dropbear.pid
+: ${SSHD_PORT:=22001}
+
+#@section functions
+dropbear_keygen() {
+   [ -f "${2:?}" ] || dropbearkey -t "${1:?}" -f "${2:?}" 1>/dev/null
+}
+
+ssd_dropbear() {
+   local SK="${1:?}"; shift
+   start-stop-daemon -${SK#-} \
+      -x /usr/sbin/dropbear -p ${DROPBEAR_PIDFILE:?} -- "$@"
+}
+
+#@section __main__
+case "${1-}" in
+   ''|'start')
+      einfo "Starting sshd"
+
+      autodie dodir_clean /etc/dropbear /var/log /var/run /root/.ssh
+
+      autodie dropbear_keygen rsa /etc/dropbear/dropbear_rsa_host_key
+      autodie dropbear_keygen dss /etc/dropbear/dropbear_dss_host_key
+
+      autodie touch /root/.ssh/authorized_keys
+
+      autodie ssd_dropbear -S -j -k -p ${SSHD_PORT} -K 20
+   ;;
+   'stop')
+      autodie ssd_dropbear -K
+   ;;
+   *)
+      die "bad usage." ${EX_USAGE}
+   ;;
+esac
