@@ -98,5 +98,9 @@ config BR2_PACKAGE_LIRAM_INITRAMFS_LAYOUT_DIRS
 	help
 		Allows to import layout files to /liram/layouts.
 
+config BR2_PACKAGE_LIRAM_INITRAMFS_CMDLINE_FILE
+	string  "embed cmdline file"
+	default ""
+
 endif # BR2_PACKAGE_LIRAM_INITRAMFS
 endif # BR2_PACKAGE_INITRAMFS_LIRAM_INITRAMFS
