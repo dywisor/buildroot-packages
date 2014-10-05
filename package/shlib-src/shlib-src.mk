@@ -5,7 +5,7 @@
 ################################################################################
 
 SHLIB_SRC_VERSION       = 0.2.908
-SHLIB_SRC__GITREF       = 987e08e2f47ed8f354c3cfac343a7aa469968cdf
+SHLIB_SRC__GITREF       = 565b02aa13b8e8e54b19cf5126a24ffc8590b43a
 SHLIB_SRC_SOURCE        = shlib-$(SHLIB_SRC__GITREF).tar.gz
 SHLIB_SRC_SITE          = $(call github,dywisor,shlib,$(SHLIB_SRC__GITREF))
 SHLIB_SRC_LICENSE       = GPLv2+
@@ -21,11 +21,31 @@ endif
 
 HOST_SHLIB_SRC_DEPENDENCIES = host-shlibcc
 
-SHLIB_SHLIBCC        = $(SHLIBCC) -S $(HOST_DIR:/=)$(SHLIB_SRC_INCLUDEDIR)
-SHLIB_RUNSCRIPT      = $(HOST_DIR:/=)/usr/bin/shlib-runscript
-SHLIB_GENSCRIPT_PROG = $(HOST_DIR:/=)/usr/bin/shlib-genscript
-SHLIB_GENSCRIPT_ARGS = --verify --interpreter /bin/sh --chmod 0644
-SHLIB_GENSCRIPT      = $(SHLIB_GENSCRIPT_PROG) $(SHLIB_GENSCRIPT_ARGS)
+SHLIB_SHLIBCC         = $(SHLIBCC) -S $(HOST_DIR:/=)$(SHLIB_SRC_INCLUDEDIR)
+SHLIB_RUNSCRIPT       = $(HOST_DIR:/=)/usr/bin/shlib-runscript
+SHLIB_GENSCRIPT_PROG  = $(HOST_DIR:/=)/usr/bin/shlib-genscript
+
+SHLIB_SRC_GENSCRIPT_ENV =
+SHLIB_SRC_GENSCRIPT_ENV += SHLIB_PRJROOT='$(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)'
+SHLIB_SRC_GENSCRIPT_ENV += SHLIB_SRC_ROOT='$(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)'
+SHLIB_SRC_GENSCRIPT_ENV += \
+	SHLIBCC_WRAPPER='$(SHLIBCC) -S $(HOST_DIR:/=)$(SHLIB_SRC_INCLUDEDIR)'
+SHLIB_SRC_GENSCRIPT_ENV += SHLIBCC_ARGS='$(SHLIBCC_FLAGS)'
+SHLIB_SRC_GENSCRIPT_ENV += SHLIBCC_LIB_ARGS='$(SHLIBCC_FLAGS) --as-lib'
+SHLIB_SRC_GENSCRIPT_ENV += DEFAULT_SHLIB_TARGET='$(SHLIB_SRC_SHAREDIR)/shlib.sh'
+SHLIB_SRC_GENSCRIPT_ENV += ALWAYS_LINK_SHLIB=y
+SHLIB_SRC_GENSCRIPT_ENV += ALWAYS_LINK=y
+SHLIB_SRC_GENSCRIPT_ENV += FORCE=n
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_BASH=n
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_INTERPRETER=/bin/sh
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_VERIFY=y
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_CHMOD=0644
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_LIB_CHMOD=0644
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_STANDALONE=n
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_OUTFILE= SCRIPT_LIB_OUTFILE=
+SHLIB_SRC_GENSCRIPT_ENV += SCRIPT_OUTFILE_REMOVE=y
+
+SHLIB_GENSCRIPT = $(SHLIB_SRC_GENSCRIPT_ENV) $(SHLIB_GENSCRIPT_PROG)
 
 SHLIB_SRC__MAKEOPTS_COMMON =
 SHLIB_SRC__MAKEOPTS_COMMON += PREFIX=/usr
@@ -70,11 +90,10 @@ SHLIB_SRC__LOADER_TYPE =
 endif
 endif
 
-# host shlib-src
-define SHLIB_SRC__PRINTVAR
-	printf "%s=%s%s%s\n" "$(1)" "\"" "$(call qstrip,$(2))" "\""
-endef
 
+
+
+# host shlib-src
 define HOST_SHLIB_SRC_BUILD_CMDS
 	$(MAKE1) -C $(@D) $(HOST_SHLIB_SRC__MAKEOPTS) clean-dynloader
 	$(MAKE1) -C $(@D) $(HOST_SHLIB_SRC__MAKEOPTS) dynloader
@@ -83,33 +102,9 @@ define HOST_SHLIB_SRC_BUILD_CMDS
 	## defsym
 	mkdir -p -- $(@D)/build/genscript
 
-	{ \
-		$(call SHLIB_SRC__PRINTVAR,export SHLIB_PRJROOT,$(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)); \
-		$(call SHLIB_SRC__PRINTVAR,export SHLIBCC_ARGS,$(SHLIBCC_FLAGS)); \
-		$(call SHLIB_SRC__PRINTVAR,export SHLIBCC_LIB_ARGS, \$${SHLIBCC_ARGS} --as-lib); \
-		$(call SHLIB_SRC__PRINTVAR,DEFAULT_SHLIB_TARGET,$(SHLIB_SRC_SHAREDIR)/shlib.sh); \
-	} > $(@D)/build/genscript/defsym.inject
-
-	## shlibcc wrapper (\$${SHLIB_PRJROOT}/CC)
-	{ \
-		printf "%s\n" '#!/bin/sh'; \
-		printf "%s" "exec"; \
-		$(foreach exe,$(call qstrip,$(SHLIBCC_PROG)),\
-			printf " %s\n\t%s" "\\" "\"$(exe)\"";) \
-		\
-		$(foreach arg,\
-			$(call qstrip,$(SHLIBCC_FLAGS)) \
-			--shlib-dir=\"$(call qstrip,$(HOST_DIR:/=)$(SHLIB_SRC_INCLUDEDIR))\" \
-			\"\$$@\",\
-				printf " %s\n\t\t%s" "\\" "$(arg)";) \
-		\
-		printf "\n"; \
-	} > $(@D)/build/genscript/CC_wrapper
-
 	## genscript.sh
 	$(SHLIBCC_PROG) --stable-sort --shlib-dir=$(@D)/lib \
 		--depfile --main $(@D)/build-scripts/generate_script.sh \
-		--defsym $(@D)/build/genscript/defsym.inject \
 		--short-header --strip-virtual -u \
 		--keep-safety-checks=y --enable-debug-code=y \
 		--output $(@D)/build/genscript/genscript.sh
@@ -120,10 +115,8 @@ define HOST_SHLIB_SRC_INSTALL_CMDS
 		$(HOST_SHLIB_SRC__MAKEOPTS) DESTDIR=$(HOST_DIR:/=)/ \
 		$(addprefix install-,full-src dynloader)
 
-	cp -R -- $(@D)/scripts/. $(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)/scripts
-
-	$(INSTALL) -D -m 0755 -- $(@D)/build/genscript/CC_wrapper \
-		$(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)/CC
+	mkdir -p -- $(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)/scripts
+	cp -dR -- $(@D)/scripts/. $(HOST_DIR:/=)$(SHLIB_SRC_SHAREDIR)/scripts/.
 
 	$(INSTALL) -D -m 0755 -- $(@D)/build/genscript/genscript.sh \
 		$(SHLIB_GENSCRIPT_PROG)

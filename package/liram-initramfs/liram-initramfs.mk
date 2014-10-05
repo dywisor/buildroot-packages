@@ -48,10 +48,6 @@ endef
 
 define LIRAM_INITRAMFS_DO_IMPORT_FILES
 	$(call LIRAM_INITRAMFS_IMPORT_TO_SRCDIR,files,$(PKGDIR)/files,)
-	# genscript won't create a linked script if it doesn't have a .depend file
-	find $(@D)/files/ -type f -name '*.in' -print0 | \
-		xargs -0 -n 1 -I '{FILE}' touch '{FILE}.depend'
-
 	$(call LIRAM_INITRAMFS_IMPORT_TO_SRCDIR,liram/layouts,\
 		$(LIRAM_INITRAMFS__IMPORT_LAYOUT_DIRS))
 endef
