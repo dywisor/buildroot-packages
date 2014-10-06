@@ -180,10 +180,10 @@ config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY_TERMTYPE
 
 
 config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
-	bool "agetty autologin"
+	bool
 
 	help
-		Enables automatic login of a specific user on a tty, e.g. tty1.
+		Enables automatic login of a specific user on a tty.
 
 
 if BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
@@ -196,15 +196,55 @@ config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_USER
 		Specify the autologin user.
 
 		The default is root, this is INSECURE.
+endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
 
-config  BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_TTY
-	string  "autologin tty"
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_TTY
+	bool "autologin on tty"
+	select BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+
+	help
+		Select whether autologin should be enabled on ttys.
+
+if BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_TTY
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_TTY_DEV
+	string  "device"
 	default "tty1"
 
 	help
 		Specify the autologin tty, e.g. tty1.
 
-endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+		Leave empty for all.
+
+endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_TTY
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_SERIAL_TTY
+	bool "autologin on serial tty"
+	select BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+
+	help
+		Select whether autologin should be enabled on serial ttys.
+
+
+if BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_SERIAL_TTY
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_SERIAL_TTY_DEV
+	string  "device"
+	default ""
+
+	help
+		Specify the autologin serial tty, e.g. ttyS0.
+
+		Leave empty for all.
+
+endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_SERIAL_TTY
+
+config BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN_CONSOLE
+	bool "autologin on console"
+	select BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_AGETTY_AUTOLOGIN
+
+	help
+		Select whether autologin should be enabled on consoles,
+		e.g. in container setups (systemd-nspawn et al).
+
 endif # BR2_PACKAGE_SYSTEMD_HACKS_SVC_SETUP_GETTY_AGETTY
 endif # BR2_PACKAGE_UTIL_LINUX_AGETTY
 
