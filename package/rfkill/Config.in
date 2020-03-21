@@ -1,7 +1,0 @@
-config BR2_PACKAGE_RFKILL
-	bool "rfkill"
-
-	help
-		Tool to read and control rfkill status through /dev/rfkill
-
-		https://www.kernel.org/pub/software/network/rfkill/
