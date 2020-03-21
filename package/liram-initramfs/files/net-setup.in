@@ -1,8 +1,0 @@
-#!/bin/sh
-if [ $# -eq 0 ]; then
-   CMDLINE_NET_CONFIG=
-   cmdline_parse
-   set -- ${CMDLINE_NET_CONFIG}
-fi
-
-net_setup /tmp/initramfs_netconfig "$@"

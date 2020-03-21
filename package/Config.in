@@ -18,6 +18,5 @@ endmenu
 	source package/diskid/Config.in
 
 	source package/better-initramfs/Config.in
-	source package/liram-initramfs/Config.in
 
 endmenu
