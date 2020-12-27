@@ -7,3 +7,4 @@ S := $(abspath $(CURDIR))
 default: install
 
 include $(S)/br_pkg_repo/br_pkg_repo.mk
+include $(S)/br_pkg_repo/br_pkg_repo_gen.mk

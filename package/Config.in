@@ -1,6 +1,5 @@
+# br_pkg_repo autogen
 menu "dywi/buildroot-packages [external repo]"
-	source package/gentoo-functions/Config.in
-
-	source package/diskid/Config.in
-
+	source "package/diskid/Config.in"
+	source "package/gentoo-functions/Config.in"
 endmenu
