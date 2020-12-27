@@ -1,48 +1,16 @@
-From c2d1def12d79eab0bb629b73996b67ea62239538 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Andr=C3=A9=20Erdmann?= <dywi@mailerd.de>
-Date: Thu, 11 Sep 2014 21:59:37 +0200
-Subject: [PATCH] add support for nounset behavior (set -u)
-
-default some vars to <empty str> if unset:
-* optional args in eindent(), eoutdent()
-* also $1 in yesno()
-* CONF_LIBDIR_OVERRIDE -- function would crash the script otherwise
-* CONSOLETYPE          -- file would not load properly otherwise
-* EINFO_LOG            -- unsure, but defaulting doesn't hurt
-* EINFO_QUIET          -- ^
-* EINFO_VERBOSE        -- ^
-* LAST_E_CMD           -- ^
-* RC_ENDCOL            -- ^
-* RC_INDENTATION       -- ^
-* RC_NOCOLOR           -- ^
-
-vars left unchanged:
-* BAD                  -- "always set"
-* BRACKED              -- ^
-* COLS                 -- ^
-* COLUMNS              -- n/a, has default value
-* CONF_LIBDIR          -- has default
-* ENDCOL               -- "always set"
-* GOOD                 -- ^
-* NORMAL               -- ^
-* RC_DEFAULT_INDENT    -- not interested in hardcoding ${RC_DEFAULT_INDENT:-2}
-* WARN                 -- "always set"
-
-Other changes:
-
-* in functions that shift N args and access $* afterwards:
-   immediately return if shift fails: shift N || return
-   or make shift optional: [ $# -eq 0 ] || shift (for N=1)
-
-* use "unset -v" (don't try to unset functions)
----
- functions.sh | 83 ++++++++++++++++++++++++++++++++----------------------------
- 1 file changed, 44 insertions(+), 39 deletions(-)
-
 diff --git a/functions.sh b/functions.sh
-index 73c9b11..65a0396 100644
+index 3ea9daa..4787760 100644
 --- a/functions.sh
 +++ b/functions.sh
+@@ -15,7 +15,7 @@ RC_GOT_FUNCTIONS="yes"
+ #
+ _esetdent()
+ {
+-	local i="$1"
++	local i="${1-}"
+ 	[ -z "$i" ] || [ "$i" -lt 0 ] && i=0
+ 	RC_INDENTATION=$(printf "%${i}s" '')
+ }
 @@ -25,8 +25,9 @@ _esetdent()
  #
  eindent()
@@ -50,7 +18,7 @@ index 73c9b11..65a0396 100644
 -	local i="$1"
 +	local i="${1-}"
  	[ -n "$i" ] && [ "$i" -gt 0 ] || i=$RC_DEFAULT_INDENT
-+	: ${RC_INDENTATION=}
++	: "${RC_INDENTATION=}"
  	_esetdent $(( ${#RC_INDENTATION} + i ))
  }
  
@@ -61,7 +29,7 @@ index 73c9b11..65a0396 100644
 -	local i="$1"
 +	local i="${1-}"
  	[ -n "$i" ] && [ "$i" -gt 0 ] || i=$RC_DEFAULT_INDENT
-+	: ${RC_INDENTATION=}
++	: "${RC_INDENTATION=}"
  	_esetdent $(( ${#RC_INDENTATION} - i ))
  }
  
@@ -74,30 +42,20 @@ index 73c9b11..65a0396 100644
  
  	case "$1" in
  		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) return 0;;
-@@ -55,6 +57,8 @@ yesno()
- 	esac
- 
- 	local value=
-+	# debatable if "set -o nounset" should affect the following line or not
-+	#  -- choosing "fail if var not set"
- 	eval value=\$${1}
- 	case "$value" in
- 		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) return 0;;
-@@ -71,11 +75,11 @@ esyslog()
+@@ -71,9 +73,9 @@ esyslog()
  	local pri=
  	local tag=
  
 -	if [ -n "$EINFO_LOG" ] && command -v logger > /dev/null 2>&1; then
+-		pri="$1"
+-		tag="$2"
 +	if [ -n "${EINFO_LOG-}" ] && command -v logger > /dev/null 2>&1; then
- 		pri="$1"
- 		tag="$2"
++		pri="${1-}"
++		tag="${2-}"
  
--		shift 2
-+		shift 2 || return
+ 		shift 2
  		[ -z "$*" ] && return 0
- 
- 		logger -p "${pri}" -t "${tag}" -- "$*"
-@@ -89,13 +93,13 @@ esyslog()
+@@ -89,13 +91,13 @@ esyslog()
  #
  einfon()
  {
@@ -114,75 +72,75 @@ index 73c9b11..65a0396 100644
  	LAST_E_CMD="einfon"
  	return 0
  }
-@@ -115,13 +119,13 @@ einfo()
+@@ -115,13 +117,13 @@ einfo()
  #
  ewarnn()
  {
 -	if yesno "${EINFO_QUIET}"; then
 +	if yesno "${EINFO_QUIET-}"; then
- 		printf " $*"
- 		else
+ 		return 0
+ 	else
 -		if ! yesno "${RC_ENDCOL}" && [ "${LAST_E_CMD}" = "ebegin" ]; then
 +		if ! yesno "${RC_ENDCOL-}" && [ "${LAST_E_CMD-}" = "ebegin" ]; then
- 			printf "\n"
+ 			printf "\n" >&2
  		fi
--		printf " ${WARN}*${NORMAL} ${RC_INDENTATION}$*"
-+		printf " ${WARN}*${NORMAL} ${RC_INDENTATION-}$*"
+-		printf " ${WARN}*${NORMAL} ${RC_INDENTATION}$*" >&2
++		printf " ${WARN}*${NORMAL} ${RC_INDENTATION-}$*" >&2
  	fi
  
  	local name="${0##*/}"
-@@ -137,13 +141,13 @@ ewarnn()
+@@ -137,13 +139,13 @@ ewarnn()
  #
  ewarn()
  {
 -	if yesno "${EINFO_QUIET}"; then
 +	if yesno "${EINFO_QUIET-}"; then
- 		printf " $*\n"
- 		else
+ 		return 0
+ 	else
 -		if ! yesno "${RC_ENDCOL}" && [ "${LAST_E_CMD}" = "ebegin" ]; then
 +		if ! yesno "${RC_ENDCOL-}" && [ "${LAST_E_CMD-}" = "ebegin" ]; then
- 			printf "\n"
+ 			printf "\n" >&2
  		fi
--		printf " ${WARN}*${NORMAL} ${RC_INDENTATION}$*\n"
-+		printf " ${WARN}*${NORMAL} ${RC_INDENTATION-}$*\n"
+-		printf " ${WARN}*${NORMAL} ${RC_INDENTATION}$*\n" >&2
++		printf " ${WARN}*${NORMAL} ${RC_INDENTATION-}$*\n" >&2
  	fi
  
  	local name="${0##*/}"
-@@ -159,13 +163,13 @@ ewarn()
+@@ -159,13 +161,13 @@ ewarn()
  #
  eerrorn()
  {
--	if yesno "${EINFO_QUIET}"; then
-+	if yesno "${EINFO_QUIET-}"; then
- 		printf " $*" >/dev/stderr
+-	if yesno "${EERROR_QUIET}"; then
++	if yesno "${EERROR_QUIET-}"; then
+ 		return 1
  	else
 -		if ! yesno "${RC_ENDCOL}" && [ "${LAST_E_CMD}" = "ebegin" ]; then
 +		if ! yesno "${RC_ENDCOL-}" && [ "${LAST_E_CMD-}" = "ebegin" ]; then
- 			printf "\n"
+ 			printf "\n" >&2
  		fi
--		printf " ${BAD}*${NORMAL} ${RC_INDENTATION}$*"
-+		printf " ${BAD}*${NORMAL} ${RC_INDENTATION-}$*"
+-		printf " ${BAD}*${NORMAL} ${RC_INDENTATION}$*" >&2
++		printf " ${BAD}*${NORMAL} ${RC_INDENTATION-}$*" >&2
  	fi
  
  	local name="${0##*/}"
-@@ -181,13 +185,13 @@ eerrorn()
+@@ -181,13 +183,13 @@ eerrorn()
  #
  eerror()
  {
--	if yesno "${EINFO_QUIET}"; then
-+	if yesno "${EINFO_QUIET-}"; then
- 		printf " $*\n" >/dev/stderr
+-	if yesno "${EERROR_QUIET}"; then
++	if yesno "${EERROR_QUIET-}"; then
+ 		return 1
  	else
 -		if ! yesno "${RC_ENDCOL}" && [ "${LAST_E_CMD}" = "ebegin" ]; then
 +		if ! yesno "${RC_ENDCOL-}" && [ "${LAST_E_CMD-}" = "ebegin" ]; then
- 			printf "\n"
+ 			printf "\n" >&2
  		fi
--		printf " ${BAD}*${NORMAL} ${RC_INDENTATION}$*\n"
-+		printf " ${BAD}*${NORMAL} ${RC_INDENTATION-}$*\n"
+-		printf " ${BAD}*${NORMAL} ${RC_INDENTATION}$*\n" >&2
++		printf " ${BAD}*${NORMAL} ${RC_INDENTATION-}$*\n" >&2
  	fi
  
  	local name="${0##*/}"
-@@ -204,16 +208,17 @@ eerror()
+@@ -204,16 +206,17 @@ eerror()
  ebegin()
  {
  	local msg="$*"
@@ -198,11 +156,11 @@ index 73c9b11..65a0396 100644
  		printf "\n"
  	fi
  
-+	: ${RC_INDENTATION=}
++	: "${RC_INDENTATION=}"
  	LAST_E_LEN="$(( 3 + ${#RC_INDENTATION} + ${#msg} ))"
  	LAST_E_CMD="ebegin"
  	return 0
-@@ -232,7 +237,7 @@ _eend()
+@@ -232,7 +235,7 @@ _eend()
  	shift 2
  
  	if [ "${retval}" = "0" ]; then
@@ -211,7 +169,7 @@ index 73c9b11..65a0396 100644
  		msg="${BRACKET}[ ${GOOD}ok${BRACKET} ]${NORMAL}"
  	else
  		if [ -c /dev/null ] ; then
-@@ -246,10 +251,10 @@ _eend()
+@@ -246,10 +249,10 @@ _eend()
  		msg="${BRACKET}[ ${BAD}!!${BRACKET} ]${NORMAL}"
  	fi
  
@@ -224,25 +182,7 @@ index 73c9b11..65a0396 100644
  		printf "%$(( COLS - LAST_E_LEN - 6 ))s%b\n" '' "${msg}"
  	fi
  
-@@ -263,7 +268,7 @@ _eend()
- eend()
- {
- 	local retval="${1:-0}"
--	shift
-+	[ $# -eq 0 ] || shift
- 
- 	_eend "${retval}" eerror "$*"
- 
-@@ -278,7 +283,7 @@ eend()
- ewend()
- {
- 	local retval="${1:-0}"
--	shift
-+	[ $# -eq 0 ] || shift
- 
- 	_eend "${retval}" ewarn "$*"
- 
-@@ -290,49 +295,49 @@ ewend()
+@@ -290,49 +293,49 @@ ewend()
  # The condition is negated so the return value will be zero.
  veinfo()
  {
@@ -301,16 +241,34 @@ index 73c9b11..65a0396 100644
  }
  
  #
-@@ -340,7 +345,7 @@ veoutdent()
+@@ -340,7 +343,7 @@ veoutdent()
  #
  get_libdir()
  {
 -	if [ -n "${CONF_LIBDIR_OVERRIDE}" ] ; then
 +	if [ -n "${CONF_LIBDIR_OVERRIDE-}" ] ; then
  		CONF_LIBDIR="${CONF_LIBDIR_OVERRIDE}"
- 	elif type portageq > /dev/null 2>&1; then
+ 	elif command -v portageq > /dev/null 2>&1; then
  		CONF_LIBDIR="$(portageq envvar CONF_LIBDIR)"
-@@ -420,7 +425,7 @@ RC_DOT_PATTERN=''
+@@ -371,7 +374,7 @@ get_bootparam()
+ 
+ 			# Parse gentoo option
+ 			for x in ${params} ; do
+-				if [ "${x}" = "$1" ] ; then
++				if [ "${x}" = "${1-}" ] ; then
+ #					echo "YES"
+ 					retval=0
+ 				fi
+@@ -390,7 +393,7 @@ get_bootparam()
+ is_older_than()
+ {
+ 	local x=
+-	local ref="$1"
++	local ref="${1-}"
+ 	[ $# -eq 0 ] || shift
+ 
+ 	for x in "$@" ; do
+@@ -420,7 +423,7 @@ RC_DOT_PATTERN=''
  # Cache the CONSOLETYPE - this is important as backgrounded shells don't
  # have a TTY. rc unsets it at the end of running so it shouldn't hang
  # around
@@ -319,15 +277,25 @@ index 73c9b11..65a0396 100644
  	CONSOLETYPE="$(consoletype stdout 2>/dev/null )"; export CONSOLETYPE
  fi
  if [ "${CONSOLETYPE}" = "serial" ] ; then
-@@ -452,7 +457,7 @@ fi
+@@ -440,18 +443,18 @@ done
+ # Setup COLS and ENDCOL so eend can line up the [ ok ]
+ COLS="${COLUMNS:-0}"            # bash's internal COLUMNS variable
+ [ "$COLS" -eq 0 ] && \
+-        COLS="$(set -- $(stty size 2>/dev/null) ; printf "$2\n")"
++        COLS="$(set -- $(stty size 2>/dev/null) ; printf "${2-}\n")"
+ [ -z "$COLS" ] && COLS=80
+ [ "$COLS" -gt 0 ] || COLS=80	# width of [ ok ] == 7
+ 
+-if yesno "${RC_ENDCOL}"; then
++if yesno "${RC_ENDCOL-}"; then
+ 	ENDCOL='\033[A\033['$(( COLS - 8 ))'C'
+ else
+ 	ENDCOL=''
+ fi
  
  # Setup the colors so our messages all look pretty
- if yesno "${RC_NOCOLOR}"; then
--	unset GOOD WARN BAD NORMAL HILITE BRACKET
-+	unset -v GOOD WARN BAD NORMAL HILITE BRACKET
- elif (type tput && tput colors) >/dev/null 2>&1; then
+-if yesno "${RC_NOCOLOR}"; then
++if yesno "${RC_NOCOLOR-}"; then
+ 	unset GOOD WARN BAD NORMAL HILITE BRACKET
+ elif (command -v tput && tput colors) >/dev/null 2>&1; then
  	GOOD="$(tput sgr0)$(tput bold)$(tput setaf 2)"
- 	WARN="$(tput sgr0)$(tput bold)$(tput setaf 3)"
--- 
-2.1.0
-

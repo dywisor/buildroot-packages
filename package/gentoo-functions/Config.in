@@ -4,4 +4,8 @@ config BR2_PACKAGE_GENTOO_FUNCTIONS
 	help
 		base functions for Gentoo systems
 
+		Limitations:
+		  o get_bootparam() is not usable unless gawk is also selected
+		  o get_libdir() will waste some cycles on calling portageq
+
 		https://github.com/gentoo/gentoo-functions

@@ -4,11 +4,9 @@
 #
 ################################################################################
 
-GENTOO_FUNCTIONS_VERSION       = 0.9
-#GENTOO_FUNCTIONS__GITREF       = gentoo-functions-$(GENTOO_FUNCTIONS_VERSION)
-GENTOO_FUNCTIONS__GITREF       = e43405f3b9a57c7b69067aadbf23df33caededa8
+GENTOO_FUNCTIONS_VERSION       = 0.14
 GENTOO_FUNCTIONS_SITE          = \
-	$(call github,gentoo,gentoo-functions,$(GENTOO_FUNCTIONS__GITREF))
+	$(call github,gentoo,gentoo-functions,$(GENTOO_FUNCTIONS_VERSION))
 GENTOO_FUNCTIONS_LICENSE       = GPLv2
 GENTOO_FUNCTIONS_LICENSE_FILES = COPYING
 
