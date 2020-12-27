@@ -1,0 +1,11 @@
+# repo name, e.g. Github repo path user/buildroot-packages
+REPO_NAME :=
+
+S := $(abspath $(CURDIR))
+
+include $(S)/br_pkg_repo/br_pkg_repo.mk
+
+# enable for repo helpers:
+#   repo-init-pkg PKGV=
+#   repo-update-config
+#include $(S)/br_pkg_repo/br_pkg_repo_gen.mk

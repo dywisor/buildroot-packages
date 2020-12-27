@@ -61,7 +61,11 @@ Design Overview
 *buildroot-packages*::
 
    +- buildroot-packages/
-   |  +- Makefile
+   |  +- GNUmakefile
+   |  +- br_pkg_repo/
+   |     +- br_pkg_repo.mk
+   |     +- br_pkg_repo_gen.mk
+   |     +- GNUmakefile.skel
    |  +- package/
    |     +- Config.in
    |     +- @null/ [NOT IMPLEMENTED]
@@ -75,8 +79,10 @@ Design Overview
    |     +- ...
 
 
-* the ``Makefile`` takes care of attaching the repo to and removing it from
+* the ``GNUmakefile`` takes care of attaching the repo to and removing it from
   a *buildroot source dir*
+
+* ``br_pkg_repo/`` provides the necessary logic for that
 
 * ``package/`` contains an arbitrary number of ``<package>`` subdirectories,
   as if they were put in the *buildroot source dir's* ``package/`` dir directly
@@ -147,11 +153,18 @@ To create a custom repository based on this design::
    mkdir -p ~/src/my-br-pkg/package
    cd ~/src/my-br-pkg
 
-   cp ~/src/buildroot-packages/Makefile ./
-   # set PKG_SUBDIR_NAME
-   $EDITOR ./Makefile
+   # Import package repo files
+   cp -R ~/src/buildroot-packages/br_pkg_repo ./br_pkg_repo
 
-   #cp -r ~/src/buildroot-packages/package/@null ./package/@null
+   # Start with default makefile and set REPO_NAME
+   cp ./br_pkg_repo/GNUmakefile.skel ./GNUmakefile
+   $EDITOR ./GNUmakefile
 
-   # create Config.in
+   # skip cp: NOT IMPLEMENTED
+   #cp -R ~/src/buildroot-packages/package/@null ./package/@null
+
+   # Create Config.in
    $EDITOR ./package/Config.in
+
+   # Alternatively, enable "br_pkg_repo_gen.mk" in GNUmakefile
+   # and use "make repo-update-config"
