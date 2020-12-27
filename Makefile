@@ -35,19 +35,19 @@ $(_PKG_DIR): sanity-check
 	ln -s -- '$(S)/package' '$(_PKG_DIR)'
 
 # installs a symlink to a specific package in $(_PKG_DIR)
-$(_PKG_INSTALL_TARGETS): $(BR)/package/%: $(_PKG_DIR)
+$(_PKG_INSTALL_TARGETS): $(BR)/package/%: $(_PKG_DIR) sanity-check
 	mkdir -p -- $(@D)
 	rm -f    -- $@
 	ln -s    -- $(PKG_SUBDIR_NAME)/$(*) $@
 
 # removes a symlink to a specific package
 PHONY += $(_PKG_UNINSTALL_TARGETS)
-$(_PKG_UNINSTALL_TARGETS): uninstall-%:
+$(_PKG_UNINSTALL_TARGETS): uninstall-%: sanity-check
 	rm -f -- $*
 
 # adds a "source <>/Config.in" line to $BR/package/Config.in
 PHONY += register-config
-register-config: $(_PKG_DIR)
+register-config: $(_PKG_DIR) sanity-check
 	if grep -E -- \
 		'^\s*source\s+\"?package/$(PKG_SUBDIR_NAME)/Config.in\"?\s*$$' \
 		'$(BR)/package/Config.in'; \
@@ -63,7 +63,7 @@ register-config: $(_PKG_DIR)
 
 # undoes "register-config" -- removes "source <>/Config.in"
 PHONY += unregister-config
-unregister-config:
+unregister-config: sanity-check
 	sed -r \
 		-e '/^\s*source\s+\"?package\/$(PKG_SUBDIR_NAME)\/Config.in\"?\s*$$/d' \
 		-i '$(BR)/package/Config.in'
