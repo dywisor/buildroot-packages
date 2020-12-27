@@ -22,6 +22,7 @@ PHONY += sanity-check
 sanity-check:
 	test -d '$(BR)/package'
 	test -d '$(dir $(_PKG_DIR))'
+	test -d '$(BR)/toolchain/toolchain-buildroot'  # buildroot-specific path
 	test -n '$(S)'
 	test -d '$(S)/package'
 	test -f '$(S)/package/Config.in'
