@@ -1,0 +1,90 @@
+#!/bin/sh
+# Wrapper commands that (un)register/install the package repo:
+#
+#   update-wrapper [-i|--reinstall] CMD [ARG...]
+#   br-git-pull    [-i|--reinstall] [ARG...]
+#   br-git-rebase  [-i|--reinstall] [ARG...]
+#
+# Wrapper commands that keep the package repo status as-is:
+#   br-pkg-make    [ARG...]
+#
+# LIMITATION:
+#   Note that this wrapper does not work nicely
+#   for more than one external package repo.
+#
+WRAPPER_GIT_PREFIX='br-git-'
+
+die() {
+    printf '%s\n' "${1:+died: }${1:-died.}" 1>&2
+    exit "${2:-255}"
+}
+
+SCRIPT_FILE="${BASH_SOURCE:-${0}}"
+SCRIPT_FILENAME="${SCRIPT_FILE##*/}"
+SCRIPT_NAME="${SCRIPT_FILENAME%.*}"
+SCRIPT_REAL_FILE="$(readlink -f "${SCRIPT_FILE}" 2>/dev/null)"
+[ -n "${SCRIPT_REAL_FILE}" ] || die "Failed to locate script file"
+
+SCRIPT_DIR="${SCRIPT_REAL_FILE%/*}"
+
+# assumption: wrapper path is <BR_PKG_PRJROOT>/br_pkg_repo/bin/update-wrapper
+BR_PKG_PRJROOT="${SCRIPT_DIR%/*/*}"
+[ -f "${BR_PKG_PRJROOT}/GNUmakefile" ] && [ -d "${BR_PKG_PRJROOT}/package" ] || \
+    die "Invalid br-pkg project root: ${BR_PKG_PRJROOT:-<empty>}"
+
+GIT_TOPDIR="$( git rev-parse --show-toplevel 2>/dev/null )" && [ -n "${GIT_TOPDIR}" ] || \
+    die "Failed to locate top-level git repo directory"
+
+# @impure int br_pkg_make ( ... )
+br_pkg_make() {
+    make -C "${BR_PKG_PRJROOT}" BR="${GIT_TOPDIR}" "${@}"
+}
+
+# make targets to be run pre/post CMD
+target_pre='unregister-config'
+target_post='register-config'
+
+while [ $# -gt 0 ]; do
+    case "${1}" in
+        '-i'|'--reinstall')
+            shift
+            target_pre='uninstall'
+            target_post='install'
+        ;;
+
+        '--')
+            shift
+            break
+        ;;
+
+        *)
+            break
+        ;;
+    esac
+done
+
+case "${SCRIPT_NAME}" in
+    'update-wrapper')
+        # keep cmdv as-is
+        [ $# -gt 0 ] || die "No command given." 64
+    ;;
+
+    'br-pkg-make')
+        # empty args is ok here
+        br_pkg_make "${@}" || exit ${?}
+        exit 0
+    ;;
+
+    "${WRAPPER_GIT_PREFIX}"?*)
+        # git command
+        set -- git "${SCRIPT_NAME#${WRAPPER_GIT_PREFIX}}" "${@}"
+    ;;
+
+    *)
+        die "Unknown wrapper mode: ${SCRIPT_NAME}" 70
+    ;;
+esac
+
+br_pkg_make "${target_pre}"  || exit ${?}   # error message proudly sponsored by make
+"${@}"                       || exit ${?}   # unsafe to continue on error
+br_pkg_make "${target_post}" || exit ${?}
