@@ -1,12 +1,6 @@
 menu "dywi/buildroot-packages [external repo]"
 	source package/gentoo-functions/Config.in
 
-menu "shlib"
-	source package/shlibcc/Config.in
-	source package/shlib/Config.in
-	source package/shlib-src/Config.in
-endmenu
-
 	source package/diskid/Config.in
 
 endmenu
