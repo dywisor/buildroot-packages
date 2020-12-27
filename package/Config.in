@@ -2,4 +2,5 @@
 menu "dywi/buildroot-packages [external repo]"
 	source "package/diskid/Config.in"
 	source "package/gentoo-functions/Config.in"
+	source "package/ip-dedup/Config.in"
 endmenu

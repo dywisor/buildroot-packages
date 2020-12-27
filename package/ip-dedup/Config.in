@@ -1,0 +1,7 @@
+config BR2_PACKAGE_IP_DEDUP
+	bool "ip-dedup"
+
+	help
+		`ip-dedup` merges and aggregates IPv4/IPv6 addresses/networks.
+
+		https://github.com/dywisor/ip-dedup
