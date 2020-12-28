@@ -120,10 +120,34 @@ $(REPO_PKG)/Config.in: FORCE sanity-check-repo-base
 			{ \
 				printf '%s\n' '# br_pkg_repo autogen'; \
 				printf 'menu "%s %s"\n' '$(REPO_NAME)' '[external repo]'; \
-				find $(REPO_PKG) -mindepth 2 -type f -name '*.mk' -print0 \
-					| xargs -0 -r -n 1 -I '{F}' basename '{F}' .mk \
-					| sort \
-					| xargs -r printf '\tsource "package/%s/Config.in"\n' \
+				find $(REPO_PKG) -mindepth 2 -maxdepth 2 -type f -name '*.mk' -print \
+					| { \
+						while read -r fpath_mk; do \
+							pkgdir="$${fpath_mk%/*}"; \
+							fname="$${fpath_mk##*/}"; \
+							name="$${fname%.mk}"; \
+							grp=''; \
+							{ read -r grp _dummy < "$${pkgdir}/PKG_GROUP"; } 1>/dev/null 2>&1 || :; \
+							[ -n "$${grp}" ] || grp='_'; \
+							\
+							printf '%s %s\n' "$${grp}" "$${name}"; \
+						done; \
+					} \
+					| sort -u \
+					| { \
+						prev_grp=''; \
+						while read -r grp pkg; do \
+							if [ "$${grp}" != "$${prev_grp}" ]; then \
+								[ "$${prev_grp:-_}" = '_' ] || printf 'endmenu  # %s\n' "$${prev_grp}"; \
+								if [ "$${grp}" != '_' ]; then \
+									printf '\nmenu "%s"\n' "$${grp}"; \
+								fi; \
+								prev_grp="$${grp}"; \
+							fi; \
+							printf '\tsource "package/%s/Config.in"\n' "$${pkg}"; \
+						done; \
+						[ "$${prev_grp:-_}" = '_' ] || printf 'endmenu  # %s\n' "$${prev_grp}"; \
+					} \
 				; \
 				printf 'endmenu\n'; \
 			} > '$(@).make_tmp'; \
