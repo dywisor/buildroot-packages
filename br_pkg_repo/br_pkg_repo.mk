@@ -26,7 +26,7 @@ f_convert_path_name = $(subst /,__,$(1))
 
 f_lazy_dirname = $(patsubst %/,%,$(dir $(1:/=)))
 
-f_find_packages = $(foreach d,$(wildcard $(1)/*/Config.in),$(notdir $(d:%/Config.in=%)))
+f_find_packages = $(sort $(foreach d,$(wildcard $(1)/*/Config.in),$(notdir $(d:%/Config.in=%))))
 
 
 # Init
