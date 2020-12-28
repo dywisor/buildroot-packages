@@ -1,0 +1,9 @@
+config BR2_PACKAGE_SHOREWALL
+	bool "shorewall"
+
+	depends on BR2_PACKAGE_SHOREWALL_CORE
+
+	help
+		Shorewall firewall - full IPv4
+
+		https://shorewall.org/

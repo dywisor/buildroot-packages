@@ -1,0 +1,9 @@
+config BR2_PACKAGE_SHOREWALL_INIT
+	bool "shorewall-init"
+
+	depends on BR2_PACKAGE_COREUTILS
+
+	help
+		Shorewall firewall - init
+
+		https://shorewall.org/

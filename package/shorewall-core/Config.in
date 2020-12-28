@@ -1,0 +1,14 @@
+config BR2_PACKAGE_SHOREWALL_CORE
+	bool "shorewall-core"
+
+	depends on BR2_PACKAGE_BC
+	depends on BR2_PACKAGE_IPROUTE2
+	depends on BR2_PACKAGE_IPTABLES
+	depends on BR2_PACKAGE_PERL
+
+	help
+		Shorewall firewall
+
+		This selects the common library - required for all other products.
+
+		https://shorewall.org/

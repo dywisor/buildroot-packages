@@ -7,4 +7,10 @@ menu "dywi/buildroot-packages [external repo]"
 menu "perl_modules"
 	source "package/perl-socket6/Config.in"
 endmenu  # perl_modules
+
+menu "shorewall"
+	source "package/shorewall/Config.in"
+	source "package/shorewall-core/Config.in"
+	source "package/shorewall-init/Config.in"
+endmenu  # shorewall
 endmenu
