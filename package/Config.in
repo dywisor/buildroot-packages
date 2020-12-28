@@ -3,4 +3,8 @@ menu "dywi/buildroot-packages [external repo]"
 	source "package/diskid/Config.in"
 	source "package/gentoo-functions/Config.in"
 	source "package/ip-dedup/Config.in"
+
+menu "perl_modules"
+	source "package/perl-socket6/Config.in"
+endmenu  # perl_modules
 endmenu
