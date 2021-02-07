@@ -13,6 +13,11 @@ SHOREWALL_INIT_LICENSE_FILES = $(SHOREWALL_CORE_LICENSE_FILES)
 # build order: after shorewall-core
 SHOREWALL_INIT_DEPENDENCIES = shorewall-core
 
+SHOREWALL_INIT_PRODUCTS =
+ifeq ($(BR2_PACKAGE_SHOREWALL),y)
+SHOREWALL_INIT_PRODUCTS += shorewall
+endif
+
 # using foreign hook
 SHOREWALL_INIT_POST_EXTRACT_HOOKS += SHOREWALL_CORE_DO_COPY_RC
 
@@ -45,10 +50,12 @@ endef
 SHOREWALL_INIT_POST_INSTALL_TARGET_HOOKS += SHOREWALL_INIT_DO_REMOVE_LOGROTATE
 
 # init.d script already copied
+#   FIXME bad style: append after install
 define SHOREWALL_INIT_INSTALL_INIT_OPENRC
 	$(INSTALL) -D -m 0644 -- \
 		$(SHOREWALL_INIT_PKGDIR)/shorewall-init.confd \
 		$(TARGET_DIR)/etc/conf.d/shorewall-init
+	printf 'PRODUCTS="%s"\n' '$(SHOREWALL_INIT_PRODUCTS)' >> $(TARGET_DIR)/etc/conf.d/shorewall-init
 endef
 
 $(eval $(generic-package))
