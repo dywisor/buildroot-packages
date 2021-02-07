@@ -160,6 +160,7 @@ start() {
 
 	for PRODUCT in ${PRODUCTS}; do
 		set_statedir
+		checkpath -d -m 0755 -q "${STATEDIR}" || return 1
 
 		check_firewall_script || return 1
 
@@ -181,6 +182,7 @@ stop() {
 
 	for PRODUCT in ${PRODUCTS}; do
 		set_statedir
+		checkpath -d -m 0755 -q "${STATEDIR}" || return 1
 
 		check_firewall_script || return 1
 
