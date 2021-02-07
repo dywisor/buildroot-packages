@@ -1,5 +1,5 @@
 diff --git a/functions.sh b/functions.sh
-index 3ea9daa..4787760 100644
+index 3ea9daa..707f8f4 100644
 --- a/functions.sh
 +++ b/functions.sh
 @@ -15,7 +15,7 @@ RC_GOT_FUNCTIONS="yes"
@@ -68,7 +68,7 @@ index 3ea9daa..4787760 100644
  		printf "\n"
  	fi
 -	printf " ${GOOD}*${NORMAL} ${RC_INDENTATION}$*"
-+	printf " ${GOOD}*${NORMAL} ${RC_INDENTATION-}$*"
++	printf " ${GOOD-}*${NORMAL-} ${RC_INDENTATION-}$*"
  	LAST_E_CMD="einfon"
  	return 0
  }
@@ -85,7 +85,7 @@ index 3ea9daa..4787760 100644
  			printf "\n" >&2
  		fi
 -		printf " ${WARN}*${NORMAL} ${RC_INDENTATION}$*" >&2
-+		printf " ${WARN}*${NORMAL} ${RC_INDENTATION-}$*" >&2
++		printf " ${WARN-}*${NORMAL-} ${RC_INDENTATION-}$*" >&2
  	fi
  
  	local name="${0##*/}"
@@ -102,7 +102,7 @@ index 3ea9daa..4787760 100644
  			printf "\n" >&2
  		fi
 -		printf " ${WARN}*${NORMAL} ${RC_INDENTATION}$*\n" >&2
-+		printf " ${WARN}*${NORMAL} ${RC_INDENTATION-}$*\n" >&2
++		printf " ${WARN-}*${NORMAL-} ${RC_INDENTATION-}$*\n" >&2
  	fi
  
  	local name="${0##*/}"
@@ -119,7 +119,7 @@ index 3ea9daa..4787760 100644
  			printf "\n" >&2
  		fi
 -		printf " ${BAD}*${NORMAL} ${RC_INDENTATION}$*" >&2
-+		printf " ${BAD}*${NORMAL} ${RC_INDENTATION-}$*" >&2
++		printf " ${BAD-}*${NORMAL-} ${RC_INDENTATION-}$*" >&2
  	fi
  
  	local name="${0##*/}"
@@ -136,7 +136,7 @@ index 3ea9daa..4787760 100644
  			printf "\n" >&2
  		fi
 -		printf " ${BAD}*${NORMAL} ${RC_INDENTATION}$*\n" >&2
-+		printf " ${BAD}*${NORMAL} ${RC_INDENTATION-}$*\n" >&2
++		printf " ${BAD-}*${NORMAL-} ${RC_INDENTATION-}$*\n" >&2
  	fi
  
  	local name="${0##*/}"
@@ -160,17 +160,23 @@ index 3ea9daa..4787760 100644
  	LAST_E_LEN="$(( 3 + ${#RC_INDENTATION} + ${#msg} ))"
  	LAST_E_CMD="ebegin"
  	return 0
-@@ -232,7 +235,7 @@ _eend()
+@@ -232,8 +235,8 @@ _eend()
  	shift 2
  
  	if [ "${retval}" = "0" ]; then
 -		yesno "${EINFO_QUIET}" && return 0
+-		msg="${BRACKET}[ ${GOOD}ok${BRACKET} ]${NORMAL}"
 +		yesno "${EINFO_QUIET-}" && return 0
- 		msg="${BRACKET}[ ${GOOD}ok${BRACKET} ]${NORMAL}"
++		msg="${BRACKET-}[ ${GOOD-}ok${BRACKET-} ]${NORMAL-}"
  	else
  		if [ -c /dev/null ] ; then
-@@ -246,10 +249,10 @@ _eend()
- 		msg="${BRACKET}[ ${BAD}!!${BRACKET} ]${NORMAL}"
+ 			rc_splash "stop" >/dev/null 2>&1 &
+@@ -243,13 +246,13 @@ _eend()
+ 		if [ -n "$*" ] ; then
+ 			${efunc} "$*"
+ 		fi
+-		msg="${BRACKET}[ ${BAD}!!${BRACKET} ]${NORMAL}"
++		msg="${BRACKET-}[ ${BAD-}!!${BRACKET-} ]${NORMAL-}"
  	fi
  
 -	if yesno "${RC_ENDCOL}"; then
