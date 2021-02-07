@@ -1,0 +1,7 @@
+config BR2_PACKAGE_ETCKEEPER
+	bool "etckeeper"
+
+	help
+		A collection of tools to let /etc be stored in a repository
+
+		https://etckeeper.branchable.com/
