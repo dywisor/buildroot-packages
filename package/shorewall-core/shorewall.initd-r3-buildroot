@@ -1,6 +1,9 @@
 #!/sbin/openrc-run
 # Copyright 1999-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
+#
+# Differences from the Gentoo init script:
+#   o _prepare(): create vardir if necessary
 
 if [ "${RC_SVCNAME}" = "shorewall6" ]; then
 	PRODUCT_NAME="Shorewall6"
@@ -33,31 +36,40 @@ depend() {
 	after ulogd
 }
 
+_prepare() {
+	checkpath -d -m 0755 -q "/var/lib/shorewall" || return 1
+}
+
 check() {
+	_prepare || return
 	ebegin "Checking ${RC_SVCNAME} configuration"
 	${command} ${OPTIONS} check 1>/dev/null
 	eend $?
 }
 
 clear() {
+	_prepare || return
 	ebegin "Clearing all ${RC_SVCNAME} rules and setting policy to ACCEPT"
 	${command} ${OPTIONS} clear 1>/dev/null
 	eend $?
 }
 
 reload() {
+	_prepare || return
 	ebegin "Reloading ${RC_SVCNAME}"
 	${command} ${OPTIONS} reload ${RELOADOPTIONS} 1>/dev/null
 	eend $?
 }
 
 reset() {
+	_prepare || return
 	ebegin "Resetting the packet and byte counters in ${RC_SVCNAME}"
 	${command} ${OPTIONS} reset 1>/dev/null
 	eend $?
 }
 
 restart() {
+	_prepare || return
 	local _retval
 	ebegin "Restarting ${RC_SVCNAME}"
 	${command} status 1>/dev/null
@@ -71,6 +83,7 @@ restart() {
 }
 
 start() {
+	_prepare || return
 	ebegin "Starting ${RC_SVCNAME}"
 	${command} ${OPTIONS} start ${STARTOPTIONS} 1>/dev/null
 	eend $?

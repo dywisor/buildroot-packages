@@ -35,7 +35,7 @@ endef
 
 define SHOREWALL_CORE_INSTALL_INIT_OPENRC
 	$(INSTALL) -D -m 0755 -- \
-		$(SHOREWALL_CORE_PKGDIR)/shorewall.initd-r3 \
+		$(SHOREWALL_CORE_PKGDIR)/shorewall.initd-r3-buildroot \
 		$(TARGET_DIR)/etc/init.d/shorewall
 
 	$(INSTALL) -D -m 0644 -- \

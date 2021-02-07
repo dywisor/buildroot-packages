@@ -19,6 +19,6 @@ SYSCONFFILE=                            #Name of the distributed file to be inst
 SERVICEDIR=                             #Directory where .service files are installed (systems running systemd only)
 SERVICEFILE=                            #Name of the file to install in $SYSTEMD. Default is $PRODUCT.service
 SPARSE=Yes                              #If non-empty, only install $PRODUCT/$PRODUCT.conf in $CONFDIR
-VARLIB=/lib                             #Directory where product variable data is stored.
+VARLIB=/var/lib                         #Directory where product variable data is stored.
 VARDIR=${VARLIB}/$PRODUCT               #Directory where product variable data is stored.
 DEFAULT_PAGER=                          #Pager to use if none specified in shorewall[6].conf
