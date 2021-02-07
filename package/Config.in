@@ -11,6 +11,7 @@ endmenu  # perl_modules
 menu "shorewall"
 	source "package/shorewall/Config.in"
 	source "package/shorewall-core/Config.in"
+	source "package/shorewall-hacks/Config.in"
 	source "package/shorewall-init/Config.in"
 endmenu  # shorewall
 endmenu

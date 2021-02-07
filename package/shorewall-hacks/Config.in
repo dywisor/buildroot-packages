@@ -1,0 +1,16 @@
+menuconfig BR2_PACKAGE_SHOREWALL_HACKS
+	bool "shorewall-hacks"
+
+	help
+		Various 'enhancements' for running Shorewall on Buildroot.
+
+if BR2_PACKAGE_SHOREWALL_HACKS
+
+config BR2_PACKAGE_SHOREWALL_HACKS_REMOVE_ANNOTATED
+	bool "remove dot-annotated files"
+	default y
+
+	help
+		Remove descriptive configuration files.
+
+endif # BR2_PACKAGE_SHOREWALL_HACKS
